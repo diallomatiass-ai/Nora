@@ -2,7 +2,7 @@ from datetime import datetime, timezone, timedelta
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select, func
+from sqlalchemy import select, func, case
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -159,10 +159,15 @@ async def dashboard_summary(
         .where(
             EmailMessage.account_id.in_(account_ids),
             EmailMessage.is_read == False,
-            EmailMessage.urgency.in_(["high", "medium"]),
         )
-        .order_by(EmailMessage.urgency.desc(), EmailMessage.received_at.asc())
-        .limit(5)
+        .order_by(
+            case(
+                (EmailMessage.urgency == "high", 0),
+                (EmailMessage.urgency == "medium", 1),
+                else_=2,
+            ),
+            EmailMessage.received_at.desc(),
+        )
     )
     top_emails = top_result.scalars().all()
 
@@ -177,8 +182,10 @@ async def dashboard_summary(
                 "id": str(e.id),
                 "subject": e.subject or "(intet emne)",
                 "from_address": e.from_address,
+                "from_name": e.from_name,
                 "urgency": e.urgency,
                 "category": e.category,
+                "received_at": e.received_at.isoformat() if e.received_at else None,
             }
             for e in top_emails
         ],
