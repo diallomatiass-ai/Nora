@@ -42,7 +42,7 @@ export const api = {
 
   // Emails
   generateSuggestion: (id: string) => fetchApi(`/emails/${id}/generate-suggestion`, { method: 'POST' }),
-  listEmails: (params?: { category?: string; urgency?: string; is_read?: boolean; skip?: number; limit?: number }) => {
+  listEmails: (params?: { category?: string; urgency?: string; is_read?: boolean; search?: string; skip?: number; limit?: number }) => {
     const searchParams = new URLSearchParams();
     if (params) {
       Object.entries(params).forEach(([k, v]) => {
@@ -54,6 +54,27 @@ export const api = {
   },
   getEmail: (id: string) => fetchApi(`/emails/${id}`),
   getEmailStats: () => fetchApi('/emails/stats/summary'),
+  getEmailThread: (id: string) => fetchApi(`/emails/${id}/thread`),
+  getEmailCustomerHistory: (id: string) => fetchApi(`/emails/${id}/customer-history`),
+  composeEmail: (data: { to_address: string; subject: string; body: string; account_id: string }) =>
+    fetchApi('/emails/compose', { method: 'POST', body: JSON.stringify(data) }),
+  generateComposeDraft: (data: { instructions: string; to_address?: string; subject?: string; tones?: string[] }) =>
+    fetchApi('/emails/compose/ai-draft', { method: 'POST', body: JSON.stringify(data) }),
+  listSentEmails: (params?: { skip?: number; limit?: number }) => {
+    const searchParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([k, v]) => {
+        if (v !== undefined && v !== null) searchParams.set(k, String(v));
+      });
+    }
+    const qs = searchParams.toString();
+    return fetchApi(`/emails/sent${qs ? `?${qs}` : ''}`);
+  },
+
+  // Reminders
+  listReminders: () => fetchApi('/reminders/'),
+  dismissReminder: (id: string) => fetchApi(`/reminders/${id}/dismiss`, { method: 'POST' }),
+  getReminderCount: () => fetchApi('/reminders/count'),
 
   // Suggestions
   actionSuggestion: (id: string, action: string, editedText?: string) =>

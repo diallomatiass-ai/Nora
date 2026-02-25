@@ -3,64 +3,134 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import Image from 'next/image'
-import { Inbox, LayoutDashboard, FileText, BookOpen, Settings, Sun, Moon } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Inbox, LayoutDashboard, FileText, BookOpen, Settings, Sun, Moon, Phone, Users } from 'lucide-react'
 import { useTranslation } from '@/lib/i18n'
+import { api } from '@/lib/api'
+
+interface BadgeCounts {
+  unread: number
+  newCalls: number
+  overdueTasks: number
+}
 
 export default function Sidebar() {
   const pathname = usePathname()
   const { t, theme, setTheme } = useTranslation()
+  const [badges, setBadges] = useState<BadgeCounts>({ unread: 0, newCalls: 0, overdueTasks: 0 })
+
+  useEffect(() => {
+    // Hent badge counts
+    Promise.all([
+      api.getDashboardSummary().catch(() => null),
+      api.getCallDashboard().catch(() => null),
+      api.getReminderCount().catch(() => null),
+    ]).then(([dash, calls, reminderData]) => {
+      const reminderCount = reminderData?.count ?? 0
+      setBadges({
+        unread: (dash?.unread ?? 0) + reminderCount,
+        newCalls: calls?.new_calls ?? 0,
+        overdueTasks: 0,
+      })
+    })
+  }, [pathname]) // Refresh on navigation
 
   const navItems = [
-    { href: '/', label: t('dashboard'), icon: LayoutDashboard },
-    { href: '/inbox', label: t('inbox'), icon: Inbox },
-    { href: '/templates', label: t('templates'), icon: FileText },
-    { href: '/knowledge', label: t('knowledgeBase'), icon: BookOpen },
-    { href: '/settings', label: t('settings'), icon: Settings },
+    { href: '/', label: t('dashboard'), icon: LayoutDashboard, badge: 0 },
+    { href: '/inbox', label: t('inbox'), icon: Inbox, badge: badges.unread },
+    { href: '/ai-secretary', label: t('aiSecretary'), icon: Phone, badge: badges.newCalls },
+    { href: '/customers', label: t('customers'), icon: Users, badge: 0 },
+    { href: '/templates', label: t('templates'), icon: FileText, badge: 0 },
+    { href: '/knowledge', label: t('knowledgeBase'), icon: BookOpen, badge: 0 },
+    { href: '/settings', label: t('settings'), icon: Settings, badge: 0 },
   ]
 
+  // Mobil bottom-nav: kun de 4 vigtigste
+  const mobileItems = navItems.slice(0, 4)
+
   return (
-    <aside className="w-64 border-r border-slate-200 dark:border-white/[0.06] bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl flex flex-col">
-      <div className="px-4 py-5 border-b border-slate-200 dark:border-white/[0.06]">
-        <div className="flex items-center justify-center">
-          <Image
-            src={theme === 'dark' ? '/logo-dark.png' : '/logo.png'}
-            alt="Ahmes"
-            width={150}
-            height={90}
-            className="object-contain"
-          />
+    <>
+      {/* Desktop sidebar */}
+      <aside className="hidden md:flex w-64 border-r border-[var(--border)] bg-[var(--surface)] flex-col">
+        <div className="px-4 py-5 border-b border-[var(--border)]">
+          <div className="flex items-center justify-center">
+            <Image
+              src={theme === 'dark' ? '/logo-dark.png' : '/logo.png'}
+              alt="Ahmes"
+              width={150}
+              height={90}
+              className="object-contain"
+            />
+          </div>
         </div>
-      </div>
-      <nav className="flex-1 p-3 space-y-0.5">
-        {navItems.map((item) => {
-          const Icon = item.icon
-          const isActive = pathname === item.href ||
-            (item.href !== '/' && pathname.startsWith(item.href))
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-                isActive
-                  ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 shadow-[inset_0_0_0_1px_rgba(99,102,241,0.15)]'
-                  : 'text-slate-500 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-white/[0.04] hover:text-slate-800 dark:hover:text-zinc-200'
-              }`}
-            >
-              <Icon className={`w-5 h-5 ${isActive ? 'text-indigo-600 dark:text-indigo-400' : ''}`} />
-              {item.label}
-            </Link>
-          )
-        })}
+        <nav className="flex-1 p-3 space-y-0.5">
+          {navItems.map((item) => {
+            const Icon = item.icon
+            const isActive = pathname === item.href ||
+              (item.href !== '/' && pathname.startsWith(item.href))
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
+                  isActive
+                    ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400'
+                    : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]'
+                }`}
+              >
+                <Icon className={`w-6 h-6 ${isActive ? 'text-blue-600 dark:text-blue-400' : ''}`} />
+                <span className="flex-1">{item.label}</span>
+                {item.badge > 0 && (
+                  <span className="min-w-[22px] h-[22px] flex items-center justify-center rounded-full bg-red-600 text-white text-xs font-bold px-1.5">
+                    {item.badge > 99 ? '99+' : item.badge}
+                  </span>
+                )}
+              </Link>
+            )
+          })}
+        </nav>
+        <div className="p-3 border-t border-[var(--border)]">
+          <button
+            onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+            className="flex items-center gap-2 w-full px-3 py-2.5 text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] rounded-lg hover:bg-[var(--surface-hover)] transition-colors"
+          >
+            {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+            {theme === 'light' ? t('themeNight') : t('themeDay')}
+          </button>
+        </div>
+      </aside>
+
+      {/* Mobil bottom navigation */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[var(--surface)] border-t border-[var(--border)] safe-area-bottom">
+        <div className="flex justify-around items-center h-16">
+          {mobileItems.map((item) => {
+            const Icon = item.icon
+            const isActive = pathname === item.href ||
+              (item.href !== '/' && pathname.startsWith(item.href))
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex flex-col items-center justify-center gap-0.5 flex-1 h-full relative ${
+                  isActive
+                    ? 'text-blue-600 dark:text-blue-400'
+                    : 'text-[var(--text-muted)]'
+                }`}
+              >
+                <div className="relative">
+                  <Icon className="w-6 h-6" />
+                  {item.badge > 0 && (
+                    <span className="absolute -top-1.5 -right-2.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-red-600 text-white text-[10px] font-bold px-1">
+                      {item.badge > 99 ? '99+' : item.badge}
+                    </span>
+                  )}
+                </div>
+                <span className="text-[10px] font-medium">{item.label}</span>
+              </Link>
+            )
+          })}
+        </div>
       </nav>
-      <div className="p-3 border-t border-slate-200 dark:border-white/[0.06]">
-        <button
-          onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-          className="flex items-center gap-2 w-full px-3 py-2 text-xs text-slate-500 dark:text-zinc-500 hover:text-slate-800 dark:hover:text-zinc-300 rounded-lg hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-all"
-        >
-          {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
-          {theme === 'light' ? t('themeNight') : t('themeDay')}
-        </button>
-      </div>
-    </aside>
+    </>
   )
 }

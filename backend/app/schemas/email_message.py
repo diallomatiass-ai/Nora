@@ -18,6 +18,7 @@ class EmailMessageResponse(BaseModel):
     received_at: datetime | None
     is_read: bool
     is_replied: bool
+    is_outgoing: bool = False
     category: str | None
     urgency: str | None
     topic: str | None
@@ -37,9 +38,27 @@ class EmailListResponse(BaseModel):
     received_at: datetime | None
     is_read: bool
     is_replied: bool
+    is_outgoing: bool = False
     category: str | None
     urgency: str | None
     topic: str | None
     has_suggestion: bool = False
 
     model_config = {"from_attributes": True}
+
+
+class ComposeEmailRequest(BaseModel):
+    to_address: str
+    subject: str
+    body: str
+    account_id: UUID
+
+
+class SentEmailResponse(BaseModel):
+    id: UUID
+    type: str  # 'compose' | 'reply'
+    to_address: str
+    subject: str | None
+    body_preview: str | None
+    sent_at: datetime | None
+    original_email_id: UUID | None = None
