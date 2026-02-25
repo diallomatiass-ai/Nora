@@ -39,6 +39,13 @@ class Settings(BaseSettings):
     # Mail sync
     mail_sync_interval_seconds: int = 60
 
+    # Secretary webhook (service-to-service auth)
+    secretary_webhook_key: str = ""
+
+    # Ordrestyring.dk
+    ordrestyring_api_key: str = ""
+    ordrestyring_default_case_status: str = ""
+
     model_config = {"env_file": ".env", "extra": "ignore"}
 
 

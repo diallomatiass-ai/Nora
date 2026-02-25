@@ -95,6 +95,122 @@ export const api = {
       body: JSON.stringify({ message, confirm: confirm ?? false, pending_action: pendingAction ?? null }),
     }),
 
+  // AI Secretary
+  getSecretary: () => fetchApi('/ai-secretary/'),
+  createSecretary: (data: {
+    business_name: string;
+    industry: string;
+    phone_number?: string;
+    cvr_number?: string;
+    contact_persons?: { name: string; phone: string; role: string; priority: number; notify_sms: boolean }[];
+    business_address?: string;
+    business_email?: string;
+    voice_id?: string;
+    greeting_text: string;
+    system_prompt: string;
+    required_fields: string[];
+    knowledge_items: Record<string, string>;
+    ivr_options?: { key: string; label: string; action: string; enabled: boolean }[];
+  }) => fetchApi('/ai-secretary/', { method: 'POST', body: JSON.stringify(data) }),
+  updateSecretary: (data: {
+    business_name?: string;
+    industry?: string;
+    phone_number?: string;
+    cvr_number?: string;
+    contact_persons?: { name: string; phone: string; role: string; priority: number; notify_sms: boolean }[];
+    business_address?: string;
+    business_email?: string;
+    voice_id?: string;
+    greeting_text?: string;
+    system_prompt?: string;
+    required_fields?: string[];
+    knowledge_items?: Record<string, string>;
+    ivr_options?: { key: string; label: string; action: string; enabled: boolean }[];
+    is_active?: boolean;
+  }) => fetchApi('/ai-secretary/', { method: 'PUT', body: JSON.stringify(data) }),
+  getIndustries: (businessName?: string) =>
+    fetchApi(`/ai-secretary/industries${businessName ? `?business_name=${encodeURIComponent(businessName)}` : ''}`),
+  getIndustryTemplate: (id: string, businessName?: string) =>
+    fetchApi(`/ai-secretary/industries/${id}${businessName ? `?business_name=${encodeURIComponent(businessName)}` : ''}`),
+  getCallDashboard: () => fetchApi('/ai-secretary/dashboard'),
+  getCalls: () => fetchApi('/ai-secretary/calls'),
+  updateCallStatus: (id: string, data: { status?: string; notes?: string }) =>
+    fetchApi(`/ai-secretary/calls/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+
+  // AI Secretary — create call
+  createCall: (data: {
+    caller_name?: string;
+    caller_phone?: string;
+    caller_address?: string;
+    summary: string;
+    transcript?: string;
+    required_fields_data?: Record<string, unknown>;
+    urgency?: string;
+    called_at?: string;
+  }) => fetchApi('/ai-secretary/calls', { method: 'POST', body: JSON.stringify(data) }),
+
+  // Customers
+  listCustomers: (params?: { search?: string; status?: string; skip?: number; limit?: number }) => {
+    const searchParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([k, v]) => {
+        if (v !== undefined && v !== null) searchParams.set(k, String(v));
+      });
+    }
+    const qs = searchParams.toString();
+    return fetchApi(`/customers/${qs ? `?${qs}` : ''}`);
+  },
+  getCustomer: (id: string) => fetchApi(`/customers/${id}`),
+  createCustomer: (data: {
+    name: string;
+    phone?: string;
+    email?: string;
+    address_street?: string;
+    address_zip?: string;
+    address_city?: string;
+    source?: string;
+    tags?: string[];
+    estimated_value?: number;
+    notes?: string;
+  }) => fetchApi('/customers/', { method: 'POST', body: JSON.stringify(data) }),
+  updateCustomer: (id: string, data: Record<string, unknown>) =>
+    fetchApi(`/customers/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteCustomer: (id: string) =>
+    fetchApi(`/customers/${id}`, { method: 'DELETE' }),
+  getCustomerTimeline: (id: string) => fetchApi(`/customers/${id}/timeline`),
+  mergeCustomers: (primaryId: string, secondaryId: string) =>
+    fetchApi(`/customers/${primaryId}/merge/${secondaryId}`, { method: 'POST' }),
+  getCustomerDashboard: () => fetchApi('/customers/dashboard'),
+  pushToOrdrestyring: (customerId: string, data?: { description?: string }) =>
+    fetchApi(`/customers/${customerId}/push-ordrestyring`, { method: 'POST', body: JSON.stringify(data || {}) }),
+  getOrdrestyringStatus: () => fetchApi('/customers/ordrestyring-status'),
+
+  // Action Items
+  listActionItems: (params?: { status?: string; customer_id?: string; overdue?: boolean }) => {
+    const searchParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([k, v]) => {
+        if (v !== undefined && v !== null) searchParams.set(k, String(v));
+      });
+    }
+    const qs = searchParams.toString();
+    return fetchApi(`/action-items/${qs ? `?${qs}` : ''}`);
+  },
+  getActionItemsDashboard: () => fetchApi('/action-items/dashboard'),
+  createActionItem: (data: {
+    customer_id: string;
+    action: string;
+    description?: string;
+    deadline?: string;
+    source_type?: string;
+  }) => fetchApi('/action-items/', { method: 'POST', body: JSON.stringify(data) }),
+  updateActionItem: (id: string, data: Record<string, unknown>) =>
+    fetchApi(`/action-items/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteActionItem: (id: string) =>
+    fetchApi(`/action-items/${id}`, { method: 'DELETE' }),
+  generateFollowupDraft: (id: string) =>
+    fetchApi(`/action-items/${id}/generate-draft`, { method: 'POST' }),
+
   // Accounts
   listAccounts: () => fetchApi('/webhooks/accounts'),
   connectGmail: () => fetchApi('/webhooks/gmail/connect'),
