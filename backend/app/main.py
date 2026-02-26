@@ -18,7 +18,8 @@ from app.api.customers import router as customers_router
 from app.api.action_items import router as action_items_router
 from app.api.secretary_webhook import router as secretary_webhook_router
 from app.api.reminders import router as reminders_router
-from app.api.calendar_webhooks import router as calendar_router
+from app.api.calendar import router as calendar_router
+from app.api.calendar_webhooks import router as calendar_webhooks_router
 from app.api.booking_rules import router as booking_rules_router
 import app.models  # noqa: F401 — ensure all models are registered
 
@@ -78,6 +79,7 @@ app.include_router(action_items_router, prefix="/api/action-items", tags=["actio
 app.include_router(secretary_webhook_router, prefix="/api/webhooks", tags=["secretary-webhook"])
 app.include_router(reminders_router, prefix="/api/reminders", tags=["reminders"])
 app.include_router(calendar_router, prefix="/api/calendar", tags=["calendar"])
+app.include_router(calendar_webhooks_router, prefix="/api/calendar/oauth", tags=["calendar-oauth"])
 app.include_router(booking_rules_router, prefix="/api/booking-rules", tags=["booking-rules"])
 
 

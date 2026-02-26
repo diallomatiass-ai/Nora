@@ -21,7 +21,7 @@ export default function AiSuggestionCard({ suggestion, onAction, onSend }: Props
   const statusBadge: Record<string, string> = {
     pending: 'bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400',
     approved: 'bg-green-50 dark:bg-green-500/15 text-green-600 dark:text-green-400',
-    edited: 'bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400',
+    edited: 'bg-[#42D1B9]/10 text-[#162249] dark:text-[#42D1B9]',
     rejected: 'bg-red-50 dark:bg-red-500/15 text-red-600 dark:text-red-400',
   }
   const statusLabel: Record<string, string> = { pending: t('pending'), approved: t('approved'), edited: t('edited'), rejected: t('rejected') }
@@ -49,8 +49,8 @@ export default function AiSuggestionCard({ suggestion, onAction, onSend }: Props
     <div className="gradient-border p-4">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <div className="p-1 rounded bg-indigo-50 dark:bg-indigo-500/10">
-            <Bot className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+          <div className="p-1 rounded bg-[#42D1B9]/10">
+            <Bot className="w-4 h-4 text-[#42D1B9]" />
           </div>
           <span className="text-sm font-medium text-slate-700 dark:text-zinc-300">{t('aiSuggestion')}</span>
         </div>
@@ -75,7 +75,7 @@ export default function AiSuggestionCard({ suggestion, onAction, onSend }: Props
                   <Check className="w-4 h-4" /> {t('approve')}
                 </button>
                 <button onClick={() => setEditing(true)} disabled={loading}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-500/20 disabled:opacity-50 transition-all">
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-[#162249] dark:text-[#42D1B9] bg-[#42D1B9]/10 border border-[#42D1B9]/25 rounded-lg hover:bg-[#42D1B9]/20 disabled:opacity-50 transition-all">
                   <Pencil className="w-4 h-4" /> {t('edit')}
                 </button>
                 <button onClick={() => handleAction('reject')} disabled={loading}
@@ -91,7 +91,7 @@ export default function AiSuggestionCard({ suggestion, onAction, onSend }: Props
             )}
             {suggestion.status === 'pending' && (
               <button onClick={() => setChatOpen(!chatOpen)} disabled={loading}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/20 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-500/20 disabled:opacity-50 transition-all ml-auto">
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-[#162249] dark:text-[#42D1B9] bg-[#42D1B9]/10 border border-[#42D1B9]/25 rounded-lg hover:bg-[#42D1B9]/20 disabled:opacity-50 transition-all ml-auto">
                 <MessageSquare className="w-4 h-4" /> {t('refineWithAi')}
               </button>
             )}
@@ -105,11 +105,11 @@ export default function AiSuggestionCard({ suggestion, onAction, onSend }: Props
           {chatOpen && (
             <div className="mt-3 pt-3 border-t border-slate-200 dark:border-white/[0.06]">
               <div className="flex items-center gap-2 mb-2">
-                <Sparkles className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
-                <span className="text-xs font-medium text-purple-600 dark:text-purple-400">{t('refineTitle')}</span>
+                <Sparkles className="w-3.5 h-3.5 text-[#42D1B9]" />
+                <span className="text-xs font-medium text-[#42D1B9]">{t('refineTitle')}</span>
               </div>
               {refinedText && (
-                <div className="bg-purple-50 dark:bg-purple-500/5 border border-purple-200 dark:border-purple-500/15 rounded-lg p-3 mb-3">
+                <div className="bg-[#42D1B9]/8 border border-[#42D1B9]/20 rounded-lg p-3 mb-3">
                   <p className="text-sm text-slate-700 dark:text-zinc-300 whitespace-pre-wrap">{refinedText}</p>
                   <div className="flex gap-2 mt-2">
                     <button onClick={handleApplyRefined} disabled={loading}
@@ -127,9 +127,9 @@ export default function AiSuggestionCard({ suggestion, onAction, onSend }: Props
                 <input type="text" value={chatPrompt} onChange={(e) => setChatPrompt(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleRefine()}
                   placeholder={t('refinePlaceholder')} disabled={refining}
-                  className="flex-1 px-3 py-2 text-sm bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-white/[0.08] rounded-lg text-slate-800 dark:text-zinc-200 placeholder:text-slate-400 dark:placeholder:text-zinc-600 focus:outline-none focus:border-purple-400 dark:focus:border-purple-500/40 focus:ring-1 focus:ring-purple-200 dark:focus:ring-purple-500/20 disabled:opacity-50 transition-all" />
+                  className="flex-1 px-3 py-2 text-sm bg-slate-50 dark:bg-zinc-900/50 border border-slate-200 dark:border-white/[0.08] rounded-lg text-slate-800 dark:text-zinc-200 placeholder:text-slate-400 dark:placeholder:text-zinc-600 focus:outline-none focus:border-[#42D1B9] focus:ring-1 focus:ring-[#42D1B9]/30 disabled:opacity-50 transition-all" />
                 <button onClick={handleRefine} disabled={refining || !chatPrompt.trim()}
-                  className="flex items-center gap-1.5 px-3 py-2 text-sm text-purple-600 dark:text-purple-300 bg-purple-50 dark:bg-purple-500/15 border border-purple-200 dark:border-purple-500/25 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-500/25 disabled:opacity-50 transition-all">
+                  className="flex items-center gap-1.5 px-3 py-2 text-sm text-[#162249] dark:text-[#42D1B9] bg-[#42D1B9]/10 border border-[#42D1B9]/25 rounded-lg hover:bg-[#42D1B9]/20 disabled:opacity-50 transition-all">
                   {refining ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                 </button>
               </div>

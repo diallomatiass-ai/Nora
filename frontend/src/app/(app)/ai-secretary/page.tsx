@@ -181,7 +181,7 @@ export default function AiSecretaryPage() {
                   onClick={() => setSecretary({ ...secretary, confirmation_enabled: !secretary.confirmation_enabled })}
                   className={`w-12 h-7 rounded-full transition-all flex items-center px-0.5 cursor-pointer ${
                     secretary.confirmation_enabled
-                      ? 'bg-blue-600 justify-end'
+                      ? 'bg-[#42D1B9] justify-end'
                       : 'bg-gray-300 dark:bg-zinc-600 justify-start'
                   }`}
                 >
@@ -204,7 +204,7 @@ export default function AiSecretaryPage() {
                       max={168}
                       value={secretary.response_deadline_hours}
                       onChange={(e) => setSecretary({ ...secretary, response_deadline_hours: parseInt(e.target.value) || 24 })}
-                      className="w-24 px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-sm text-[var(--text-primary)] focus:ring-2 focus:ring-blue-500 min-h-[44px]"
+                      className="w-24 px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-sm text-[var(--text-primary)] focus:ring-2 focus:ring-[#42D1B9] min-h-[44px]"
                     />
                   </div>
                   <div>
@@ -215,7 +215,7 @@ export default function AiSecretaryPage() {
                       value={secretary.confirmation_template || 'Tak for din henvendelse til {business_name}.\n\nVi har modtaget din forespørgsel om: {summary}\n\nVi vender tilbage inden {response_deadline}.\n\nVenlig hilsen\n{business_name}'}
                       onChange={(e) => setSecretary({ ...secretary, confirmation_template: e.target.value })}
                       rows={6}
-                      className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-sm text-[var(--text-primary)] focus:ring-2 focus:ring-blue-500 resize-none font-mono min-h-[44px]"
+                      className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-sm text-[var(--text-primary)] focus:ring-2 focus:ring-[#42D1B9] resize-none font-mono min-h-[44px]"
                     />
                     <p className="text-xs text-[var(--text-muted)] mt-1">
                       Variabler: {'{business_name}'}, {'{summary}'}, {'{response_deadline}'}, {'{caller_name}'}

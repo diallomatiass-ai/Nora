@@ -13,8 +13,8 @@
     --text-primary: #0f172a;
     --text-secondary: #475569;
     --text-muted: #94a3b8;
-    --accent: #6366f1;
-    --accent-hover: #4f46e5;
+    --accent: #42D1B9;
+    --accent-hover: #2ABBA4;
     --glass-bg: rgba(255, 255, 255, 0.8);
     --glass-border: rgba(0, 0, 0, 0.06);
     --card-bg: rgba(255, 255, 255, 0.9);
@@ -27,27 +27,27 @@
     color-scheme: light;
   }
 
-  /* Dark theme */
+  /* Dark theme — matcher logoets mørke navy */
   .dark {
-    --bg: #09090b;
-    --surface: #18181b;
-    --surface-hover: #27272a;
-    --border: #27272a;
+    --bg: #0D1B3E;
+    --surface: #162249;
+    --surface-hover: #1e2d5e;
+    --border: #1e2d5e;
     --border-subtle: rgba(255, 255, 255, 0.08);
-    --text-primary: #fafafa;
-    --text-secondary: #a1a1aa;
-    --text-muted: #71717a;
-    --accent: #6366f1;
-    --accent-hover: #818cf8;
-    --glass-bg: rgba(24, 24, 27, 0.7);
-    --glass-border: rgba(255, 255, 255, 0.06);
-    --card-bg: rgba(24, 24, 27, 0.5);
-    --card-border: rgba(255, 255, 255, 0.08);
-    --input-bg: #18181b;
-    --input-border: #27272a;
-    --gradient-border-bg: #18181b;
-    --scrollbar-thumb: #27272a;
-    --scrollbar-thumb-hover: #3f3f46;
+    --text-primary: #ffffff;
+    --text-secondary: #a8bdd6;
+    --text-muted: #6b84a8;
+    --accent: #42D1B9;
+    --accent-hover: #56DEC8;
+    --glass-bg: rgba(22, 34, 73, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --card-bg: rgba(22, 34, 73, 0.6);
+    --card-border: rgba(66, 209, 185, 0.12);
+    --input-bg: #162249;
+    --input-border: #1e2d5e;
+    --gradient-border-bg: #162249;
+    --scrollbar-thumb: #1e2d5e;
+    --scrollbar-thumb-hover: #2a3f7a;
     color-scheme: dark;
   }
 
@@ -104,7 +104,7 @@
     position: absolute;
     inset: -1px;
     border-radius: inherit;
-    background: linear-gradient(135deg, #6366f1, #8b5cf6, #6366f1);
+    background: linear-gradient(135deg, #162249, #42D1B9, #162249);
     z-index: -1;
     opacity: 0.5;
   }
@@ -122,8 +122,8 @@
   }
 
   .input-field:focus {
-    border-color: rgba(99, 102, 241, 0.5);
-    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+    border-color: rgba(66, 209, 185, 0.5);
+    box-shadow: 0 0 0 2px rgba(66, 209, 185, 0.2);
   }
 
   /* Keep input-dark as alias for backwards compat */
@@ -140,18 +140,24 @@
   }
 
   .input-dark:focus {
-    border-color: rgba(99, 102, 241, 0.5);
-    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+    border-color: rgba(66, 209, 185, 0.5);
+    box-shadow: 0 0 0 2px rgba(66, 209, 185, 0.2);
   }
 
   .btn-primary {
     @apply px-4 py-2 text-sm font-medium text-white rounded-lg transition-all;
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    background: linear-gradient(135deg, #162249, #42D1B9);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2), 0 0 0 1px rgba(66,209,185,0.2);
   }
 
   .btn-primary:hover {
-    background: linear-gradient(135deg, #818cf8, #a78bfa);
-    box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+    background: linear-gradient(135deg, #1e2d6b, #56DEC8);
+    box-shadow: 0 4px 16px rgba(66, 209, 185, 0.35), 0 0 0 1px rgba(66,209,185,0.3);
+    transform: translateY(-1px);
+  }
+
+  .btn-primary:active {
+    transform: translateY(0);
   }
 
   .btn-primary:disabled {

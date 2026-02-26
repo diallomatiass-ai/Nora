@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
-import { Inbox, LayoutDashboard, FileText, BookOpen, Settings, Sun, Moon, Phone, Users } from 'lucide-react'
+import { Inbox, LayoutDashboard, FileText, BookOpen, Settings, Sun, Moon, Phone, Users, Calendar } from 'lucide-react'
 import { useTranslation } from '@/lib/i18n'
 import { api } from '@/lib/api'
 
@@ -12,25 +12,31 @@ interface BadgeCounts {
   unread: number
   newCalls: number
   overdueTasks: number
+  todayEvents: number
 }
 
 export default function Sidebar() {
   const pathname = usePathname()
   const { t, theme, setTheme } = useTranslation()
-  const [badges, setBadges] = useState<BadgeCounts>({ unread: 0, newCalls: 0, overdueTasks: 0 })
+  const [badges, setBadges] = useState<BadgeCounts>({ unread: 0, newCalls: 0, overdueTasks: 0, todayEvents: 0 })
 
   useEffect(() => {
     // Hent badge counts
+    const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0)
+    const todayEnd = new Date(); todayEnd.setHours(23, 59, 59, 999)
+
     Promise.all([
       api.getDashboardSummary().catch(() => null),
       api.getCallDashboard().catch(() => null),
       api.getReminderCount().catch(() => null),
-    ]).then(([dash, calls, reminderData]) => {
+      api.getCalendarEvents(todayStart.toISOString(), todayEnd.toISOString()).catch(() => null),
+    ]).then(([dash, calls, reminderData, calEvents]) => {
       const reminderCount = reminderData?.count ?? 0
       setBadges({
         unread: (dash?.unread ?? 0) + reminderCount,
         newCalls: calls?.new_calls ?? 0,
         overdueTasks: 0,
+        todayEvents: Array.isArray(calEvents) ? calEvents.length : 0,
       })
     })
   }, [pathname]) // Refresh on navigation
@@ -40,6 +46,7 @@ export default function Sidebar() {
     { href: '/inbox', label: t('inbox'), icon: Inbox, badge: badges.unread },
     { href: '/ai-secretary', label: t('aiSecretary'), icon: Phone, badge: badges.newCalls },
     { href: '/customers', label: t('customers'), icon: Users, badge: 0 },
+    { href: '/calendar', label: 'Kalender', icon: Calendar, badge: badges.todayEvents },
     { href: '/templates', label: t('templates'), icon: FileText, badge: 0 },
     { href: '/knowledge', label: t('knowledgeBase'), icon: BookOpen, badge: 0 },
     { href: '/settings', label: t('settings'), icon: Settings, badge: 0 },
@@ -74,11 +81,11 @@ export default function Sidebar() {
                 href={item.href}
                 className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
                   isActive
-                    ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400'
+                    ? 'bg-[#42D1B9]/10 text-[#162249] dark:text-[#42D1B9]'
                     : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]'
                 }`}
               >
-                <Icon className={`w-6 h-6 ${isActive ? 'text-blue-600 dark:text-blue-400' : ''}`} />
+                <Icon className={`w-6 h-6 ${isActive ? 'text-[#42D1B9]' : ''}`} />
                 <span className="flex-1">{item.label}</span>
                 {item.badge > 0 && (
                   <span className="min-w-[22px] h-[22px] flex items-center justify-center rounded-full bg-red-600 text-white text-xs font-bold px-1.5">
@@ -113,7 +120,7 @@ export default function Sidebar() {
                 href={item.href}
                 className={`flex flex-col items-center justify-center gap-0.5 flex-1 h-full relative ${
                   isActive
-                    ? 'text-blue-600 dark:text-blue-400'
+                    ? 'text-[#42D1B9]'
                     : 'text-[var(--text-muted)]'
                 }`}
               >

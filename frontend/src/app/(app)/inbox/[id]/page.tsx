@@ -45,7 +45,7 @@ export default function EmailPage() {
     return (
       <div className="p-8">
         <p className="text-red-500 dark:text-red-400">{error || t('emailNotFound')}</p>
-        <Link href="/inbox" className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 text-sm mt-2 inline-block transition-colors">
+        <Link href="/inbox" className="text-[#42D1B9] hover:text-[#56DEC8] text-sm mt-2 inline-block transition-colors">
           {t('backToInbox')}
         </Link>
       </div>
@@ -64,7 +64,7 @@ export default function EmailPage() {
           <button
             onClick={handleGenerate}
             disabled={generating}
-            className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50 transition-colors"
+            className="btn-primary inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg disabled:opacity-50"
           >
             {generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
             {generating ? 'Genererer...' : 'Generer AI-forslag'}
@@ -88,7 +88,7 @@ export default function EmailPage() {
                 <button
                   onClick={handleGenerate}
                   disabled={generating}
-                  className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg bg-indigo-100 dark:bg-indigo-500/20 hover:bg-indigo-200 dark:hover:bg-indigo-500/30 text-indigo-700 dark:text-indigo-300 disabled:opacity-50 transition-colors"
+                  className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg bg-[#42D1B9]/15 dark:bg-[#42D1B9]/20 hover:bg-[#42D1B9]/25 text-[#162249] dark:text-[#42D1B9] disabled:opacity-50 transition-colors"
                 >
                   {generating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
                   {generating ? 'Genererer...' : 'Generer AI-forslag nu'}
@@ -116,7 +116,7 @@ export default function EmailPage() {
                   {email.confidence != null && (
                     <div className="flex justify-between">
                       <span className="text-slate-400 dark:text-zinc-600">{t('confidence')}</span>
-                      <span className="font-medium text-indigo-600 dark:text-indigo-400">{Math.round(email.confidence * 100)}%</span>
+                      <span className="font-medium text-[#42D1B9]">{Math.round(email.confidence * 100)}%</span>
                     </div>
                   )}
                 </div>

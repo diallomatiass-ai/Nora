@@ -185,9 +185,9 @@ export default function ComposeEmail({ onClose, onSent }: Props) {
 
             {/* AI Draft prompt */}
             {aiPromptOpen && (
-              <div className="px-4 py-3 border-b border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/50">
+              <div className="px-4 py-3 border-b border-[#42D1B9]/20 bg-[#42D1B9]/5">
                 <div className="flex items-start gap-2.5">
-                  <Sparkles className="w-4 h-4 text-indigo-500 mt-1 flex-shrink-0" />
+                  <Sparkles className="w-4 h-4 text-[#42D1B9] mt-1 flex-shrink-0" />
                   <div className="flex-1 space-y-2.5">
                     {/* Tone pills */}
                     <div className="flex flex-wrap gap-1.5">
@@ -199,8 +199,8 @@ export default function ComposeEmail({ onClose, onSent }: Props) {
                             onClick={() => toggleTone(tone.id)}
                             className={`px-2.5 py-1 text-[11px] font-medium rounded-full border transition-all ${
                               active
-                                ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                                : 'bg-white dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-zinc-600 hover:border-indigo-300 dark:hover:border-indigo-600 hover:text-indigo-600 dark:hover:text-indigo-400'
+                                ? 'bg-[#162249] text-white border-[#162249] shadow-sm'
+                                : 'bg-white dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-zinc-600 hover:border-[#42D1B9] hover:text-[#42D1B9]'
                             }`}
                           >
                             {tone.da}
@@ -213,7 +213,7 @@ export default function ComposeEmail({ onClose, onSent }: Props) {
                       onChange={(e) => setAiInstructions(e.target.value)}
                       placeholder={t('aiDraftPlaceholder')}
                       rows={2}
-                      className="w-full text-[13px] bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 rounded-lg border border-indigo-200 dark:border-indigo-700 px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-400 resize-none placeholder:text-zinc-400"
+                      className="w-full text-[13px] bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 rounded-lg border border-[#42D1B9]/25 px-3 py-2 outline-none focus:ring-2 focus:ring-[#42D1B9]/50 resize-none placeholder:text-zinc-400"
                       autoFocus
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' && !e.shiftKey) {
@@ -226,7 +226,7 @@ export default function ComposeEmail({ onClose, onSent }: Props) {
                       <button
                         onClick={handleAiDraft}
                         disabled={!aiInstructions.trim() || aiGenerating}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50 transition-colors"
+                        className="btn-primary inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg disabled:opacity-50"
                       >
                         {aiGenerating ? (
                           <><Loader2 className="w-3 h-3 animate-spin" />{t('aiDraftGenerating')}</>
@@ -277,7 +277,7 @@ export default function ComposeEmail({ onClose, onSent }: Props) {
               <button
                 onClick={handleSend}
                 disabled={!isValid || sending || sent}
-                className="inline-flex items-center gap-1.5 px-5 py-[7px] text-[13px] font-semibold rounded-full bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-40 transition-colors"
+                className="btn-primary inline-flex items-center gap-1.5 px-5 py-[7px] text-[13px] font-semibold rounded-full disabled:opacity-40"
               >
                 {sending ? (
                   <><Loader2 className="w-3.5 h-3.5 animate-spin" />{t('sending')}</>
@@ -289,8 +289,8 @@ export default function ComposeEmail({ onClose, onSent }: Props) {
                 onClick={() => setAiPromptOpen(!aiPromptOpen)}
                 className={`inline-flex items-center gap-1.5 px-3 py-[7px] text-xs font-medium rounded-full border transition-colors ${
                   aiPromptOpen
-                    ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-700'
-                    : 'text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-zinc-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-indigo-300 dark:hover:border-indigo-700'
+                    ? 'bg-[#42D1B9]/15 text-[#162249] dark:text-[#42D1B9] border-[#42D1B9]/30'
+                    : 'text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-zinc-600 hover:bg-[#42D1B9]/10 hover:text-[#42D1B9] hover:border-[#42D1B9]/30'
                 }`}
               >
                 <Sparkles className="w-3.5 h-3.5" />

@@ -184,12 +184,14 @@ async def create_secretary_call(
     await db.flush()
 
     # Auto-detect/opret kunde
+    customer_linked = False
     try:
         customer = await find_or_create_from_call(
             data.caller_name, data.caller_phone, data.caller_address,
             secretary.user_id, db,
         )
         call.customer_id = customer.id
+        customer_linked = True
     except Exception:
         logger.exception("Failed to link webhook call to customer")
 
@@ -217,6 +219,7 @@ async def create_secretary_call(
         "secretary_id": str(call.secretary_id),
         "customer_id": str(call.customer_id) if call.customer_id else None,
         "status": "created",
+        "customer_linked": customer_linked,
     }
 
 

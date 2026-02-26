@@ -165,7 +165,7 @@ export default function Dashboard() {
       {/* 3 Stat-bokse */}
       <div className="grid grid-cols-3 gap-3">
         <StatBox label={t('urgent')} value={urgentCount} color="text-red-700 dark:text-red-400" bg="bg-red-50 dark:bg-red-500/10" borderColor="border-red-200 dark:border-red-500/20" />
-        <StatBox label={t('newItems')} value={newCount} color="text-blue-700 dark:text-blue-400" bg="bg-blue-50 dark:bg-blue-500/10" borderColor="border-blue-200 dark:border-blue-500/20" />
+        <StatBox label={t('newItems')} value={newCount} color="text-[#162249] dark:text-[#42D1B9]" bg="bg-[#42D1B9]/10" borderColor="border-[#42D1B9]/20" />
         <StatBox label={t('tasks')} value={openTasks} color="text-amber-700 dark:text-amber-400" bg="bg-amber-50 dark:bg-amber-500/10" borderColor="border-amber-200 dark:border-amber-500/20" />
       </div>
 
@@ -179,7 +179,7 @@ export default function Dashboard() {
               <Mail className="w-4 h-4" />
               Mails der haster
             </h2>
-            <Link href="/inbox?urgency=high" className="text-xs text-blue-600 dark:text-blue-400 hover:underline">Se alle</Link>
+            <Link href="/inbox?urgency=high" className="text-xs text-[#42D1B9] hover:text-[#56DEC8] hover:underline">Se alle</Link>
           </div>
           {allEmails.length > 0 ? (
             <div className="space-y-1 overflow-y-auto flex-1 min-h-0">
@@ -225,7 +225,7 @@ export default function Dashboard() {
               <PhoneIncoming className="w-4 h-4" />
               Haster
             </h2>
-            <Link href="/ai-secretary" className="text-xs text-blue-600 dark:text-blue-400 hover:underline">Se alle</Link>
+            <Link href="/ai-secretary" className="text-xs text-[#42D1B9] hover:text-[#56DEC8] hover:underline">Se alle</Link>
           </div>
           {urgentCallsFirst.length > 0 ? (
             <div className="space-y-1 overflow-y-auto flex-1 min-h-0">
@@ -237,7 +237,7 @@ export default function Dashboard() {
                     onMouseEnter={(ev) => showPreview('call', c.id, ev)}
                     onMouseLeave={hidePreview}
                     className={`px-3 py-2.5 rounded-lg border-l-4 cursor-pointer transition-colors ${
-                      c.urgency === 'high' ? 'border-l-red-500' : 'border-l-blue-500'
+                      c.urgency === 'high' ? 'border-l-red-500' : 'border-l-[#42D1B9]'
                     } ${isActive ? 'bg-[var(--surface-hover)]' : 'hover:bg-[var(--surface-hover)]'}`}
                   >
                     <div className="flex items-center justify-between gap-2">
@@ -279,7 +279,7 @@ export default function Dashboard() {
               <ClipboardList className="w-4 h-4" />
               {t('tasks')}
             </h2>
-            <Link href="/customers" className="text-xs text-blue-600 dark:text-blue-400 hover:underline">{t('viewAll')}</Link>
+            <Link href="/customers" className="text-xs text-[#42D1B9] hover:text-[#56DEC8] hover:underline">{t('viewAll')}</Link>
           </div>
           {tasks.length > 0 ? (
             <div className="space-y-1 overflow-y-auto flex-1 min-h-0">
@@ -347,7 +347,7 @@ export default function Dashboard() {
               {preview.type === 'email' ? (
                 <Mail className="w-4 h-4 text-red-500" />
               ) : (
-                <PhoneIncoming className="w-4 h-4 text-blue-500" />
+                <PhoneIncoming className="w-4 h-4 text-[#42D1B9]" />
               )}
               <span className="text-xs font-bold text-[var(--text-muted)] uppercase">
                 {preview.type === 'email' ? 'Mail' : 'Opkald'}
@@ -385,7 +385,7 @@ export default function Dashboard() {
               )}
               <Link
                 href={`/inbox/${previewEmail.id}`}
-                className="block text-center text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline py-1"
+                className="block text-center text-sm font-medium text-[#42D1B9] hover:text-[#56DEC8] hover:underline py-1"
               >
                 Åbn mail →
               </Link>
@@ -413,7 +413,7 @@ export default function Dashboard() {
                   <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                     previewCall.urgency === 'high'
                       ? 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400'
-                      : 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400'
+                      : 'bg-[#42D1B9]/15 text-[#162249] dark:bg-[#42D1B9]/20 dark:text-[#42D1B9]'
                   }`}>
                     {previewCall.urgency === 'high' ? 'Akut' : previewCall.urgency === 'medium' ? 'Medium' : 'Lav'}
                   </span>

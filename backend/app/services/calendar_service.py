@@ -5,6 +5,7 @@ Håndterer:
 - Hent ledige tider (freebusy)
 - Book aftaler (opret event)
 - SMS-bekræftelse via Twilio
+- CRUD sync til Google/Outlook (brugt af calendar.py API)
 """
 
 import logging
@@ -19,7 +20,9 @@ from twilio.rest import Client as TwilioClient
 from app.config import settings
 from app.models.ai_secretary import AiSecretary
 from app.models.calendar_account import CalendarAccount
-from app.services.token_manager import get_valid_calendar_token
+from app.models.mail_account import MailAccount
+from app.models.calendar_event import CalendarEvent
+from app.services.token_manager import get_valid_calendar_token, get_valid_token
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +56,10 @@ DEFAULT_BOOKING_RULES = {
     "custom_slots": {},
 }
 
+
+# ══════════════════════════════════════════════════════════════════════════
+# CalendarService — booking via AI Sekretær (freebusy + book)
+# ══════════════════════════════════════════════════════════════════════════
 
 class CalendarService:
 
@@ -360,17 +367,14 @@ class CalendarService:
         while current_date <= end_date:
             date_str = current_date.strftime("%Y-%m-%d")
 
-            # Tjek om dagen er blokeret
             if date_str in blocked_dates:
                 current_date += timedelta(days=1)
                 continue
 
-            # Tjek om det er en arbejdsdag
             if current_date.weekday() not in work_days:
                 current_date += timedelta(days=1)
                 continue
 
-            # Brug custom slots hvis defineret for denne dato
             if date_str in custom_slots:
                 custom = custom_slots[date_str]
                 day_start_h, day_start_m = map(int, custom["start"].split(":"))
@@ -379,13 +383,11 @@ class CalendarService:
                 day_start_h, day_start_m = work_start_h, work_start_m
                 day_end_h, day_end_m = work_end_h, work_end_m
 
-            # Tæl bookinger denne dag
             day_bookings = 0
             for bs, be in busy_periods:
                 if bs.date() == current_date:
                     day_bookings += 1
 
-            # Generer slot-tider
             slot_start = datetime(
                 current_date.year, current_date.month, current_date.day,
                 day_start_h, day_start_m, tzinfo=timezone.utc,
@@ -398,16 +400,13 @@ class CalendarService:
             while slot_start + timedelta(minutes=slot_duration) <= day_end:
                 slot_end = slot_start + timedelta(minutes=slot_duration)
 
-                # Tjek min_notice
                 if slot_start < min_start:
                     slot_start = slot_start + timedelta(minutes=slot_duration + buffer)
                     continue
 
-                # Tjek max bookinger pr. dag
                 if day_bookings >= max_per_day:
                     break
 
-                # Tjek om slot overlapper med busy perioder (inkl. buffer)
                 is_busy = False
                 for bs, be in busy_periods:
                     buffered_start = bs - timedelta(minutes=buffer)
@@ -417,7 +416,6 @@ class CalendarService:
                         break
 
                 if not is_busy:
-                    # Filtrér efter foretrukken tid
                     if preferred_time == "morning" and slot_start.hour >= 12:
                         slot_start += timedelta(minutes=slot_duration + buffer)
                         continue
@@ -464,7 +462,6 @@ class CalendarService:
             client = TwilioClient(settings.twilio_account_sid, settings.twilio_auth_token)
             from_number = settings.twilio_phone_number
 
-            # SMS til kunden
             if customer_phone:
                 client.messages.create(
                     body=(
@@ -477,7 +474,6 @@ class CalendarService:
                 )
                 logger.info(f"Booking SMS sendt til kunde: {customer_phone}")
 
-            # SMS til håndværkeren
             if owner_phone:
                 client.messages.create(
                     body=(
@@ -491,3 +487,200 @@ class CalendarService:
 
         except Exception as e:
             logger.error(f"SMS-bekræftelse fejlede: {e}")
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# CRUD Calendar Services — brugt af calendar.py API (CalendarEvent sync)
+# ══════════════════════════════════════════════════════════════════════════
+
+def _google_event_body(event: CalendarEvent) -> dict:
+    """Byg Google Calendar API request body."""
+    return {
+        "summary": event.title,
+        "description": event.description or "",
+        "start": {
+            "dateTime": event.start_time.isoformat(),
+            "timeZone": "Europe/Copenhagen",
+        },
+        "end": {
+            "dateTime": event.end_time.isoformat(),
+            "timeZone": "Europe/Copenhagen",
+        },
+    }
+
+
+def _outlook_event_body(event: CalendarEvent) -> dict:
+    """Byg Microsoft Graph API request body."""
+    return {
+        "subject": event.title,
+        "body": {
+            "contentType": "text",
+            "content": event.description or "",
+        },
+        "start": {
+            "dateTime": event.start_time.strftime("%Y-%m-%dT%H:%M:%S"),
+            "timeZone": "Romance Standard Time",
+        },
+        "end": {
+            "dateTime": event.end_time.strftime("%Y-%m-%dT%H:%M:%S"),
+            "timeZone": "Romance Standard Time",
+        },
+    }
+
+
+class GoogleCalendarService:
+    """Google Calendar API v3 klient."""
+
+    BASE_URL = "https://www.googleapis.com/calendar/v3"
+    CALENDAR_ID = "primary"
+
+    def __init__(self, account: MailAccount, db):
+        self.account = account
+        self.db = db
+
+    async def _get_headers(self) -> dict:
+        token = await get_valid_token(self.account, self.db)
+        return {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+
+    async def create_event(self, event: CalendarEvent) -> str | None:
+        try:
+            headers = await self._get_headers()
+            async with httpx.AsyncClient() as client:
+                resp = await client.post(
+                    f"{self.BASE_URL}/calendars/{self.CALENDAR_ID}/events",
+                    headers=headers, json=_google_event_body(event), timeout=15,
+                )
+                if resp.status_code in (200, 201):
+                    return resp.json().get("id")
+                logger.warning("Google Calendar create fejlede: %s %s", resp.status_code, resp.text)
+        except Exception as e:
+            logger.error("Google Calendar create exception: %s", e)
+        return None
+
+    async def update_event(self, external_id: str, event: CalendarEvent) -> bool:
+        try:
+            headers = await self._get_headers()
+            async with httpx.AsyncClient() as client:
+                resp = await client.put(
+                    f"{self.BASE_URL}/calendars/{self.CALENDAR_ID}/events/{external_id}",
+                    headers=headers, json=_google_event_body(event), timeout=15,
+                )
+                return resp.status_code == 200
+        except Exception as e:
+            logger.error("Google Calendar update exception: %s", e)
+        return False
+
+    async def delete_event(self, external_id: str) -> bool:
+        try:
+            headers = await self._get_headers()
+            async with httpx.AsyncClient() as client:
+                resp = await client.delete(
+                    f"{self.BASE_URL}/calendars/{self.CALENDAR_ID}/events/{external_id}",
+                    headers=headers, timeout=15,
+                )
+                return resp.status_code in (200, 204)
+        except Exception as e:
+            logger.error("Google Calendar delete exception: %s", e)
+        return False
+
+    async def list_events(self, start: datetime, end: datetime) -> list[dict]:
+        try:
+            headers = await self._get_headers()
+            params = {
+                "timeMin": start.isoformat(),
+                "timeMax": end.isoformat(),
+                "singleEvents": "true",
+                "orderBy": "startTime",
+            }
+            async with httpx.AsyncClient() as client:
+                resp = await client.get(
+                    f"{self.BASE_URL}/calendars/{self.CALENDAR_ID}/events",
+                    headers=headers, params=params, timeout=15,
+                )
+                if resp.status_code == 200:
+                    return resp.json().get("items", [])
+        except Exception as e:
+            logger.error("Google Calendar list exception: %s", e)
+        return []
+
+
+class OutlookCalendarService:
+    """Microsoft Graph Calendar API klient."""
+
+    BASE_URL = "https://graph.microsoft.com/v1.0/me/events"
+
+    def __init__(self, account: MailAccount, db):
+        self.account = account
+        self.db = db
+
+    async def _get_headers(self) -> dict:
+        token = await get_valid_token(self.account, self.db)
+        return {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+
+    async def create_event(self, event: CalendarEvent) -> str | None:
+        try:
+            headers = await self._get_headers()
+            async with httpx.AsyncClient() as client:
+                resp = await client.post(
+                    self.BASE_URL, headers=headers,
+                    json=_outlook_event_body(event), timeout=15,
+                )
+                if resp.status_code == 201:
+                    return resp.json().get("id")
+                logger.warning("Outlook Calendar create fejlede: %s %s", resp.status_code, resp.text)
+        except Exception as e:
+            logger.error("Outlook Calendar create exception: %s", e)
+        return None
+
+    async def update_event(self, external_id: str, event: CalendarEvent) -> bool:
+        try:
+            headers = await self._get_headers()
+            async with httpx.AsyncClient() as client:
+                resp = await client.patch(
+                    f"{self.BASE_URL}/{external_id}",
+                    headers=headers, json=_outlook_event_body(event), timeout=15,
+                )
+                return resp.status_code == 200
+        except Exception as e:
+            logger.error("Outlook Calendar update exception: %s", e)
+        return False
+
+    async def delete_event(self, external_id: str) -> bool:
+        try:
+            headers = await self._get_headers()
+            async with httpx.AsyncClient() as client:
+                resp = await client.delete(
+                    f"{self.BASE_URL}/{external_id}",
+                    headers=headers, timeout=15,
+                )
+                return resp.status_code == 204
+        except Exception as e:
+            logger.error("Outlook Calendar delete exception: %s", e)
+        return False
+
+    async def list_events(self, start: datetime, end: datetime) -> list[dict]:
+        try:
+            headers = await self._get_headers()
+            params = {
+                "$filter": f"start/dateTime ge '{start.strftime('%Y-%m-%dT%H:%M:%S')}' and end/dateTime le '{end.strftime('%Y-%m-%dT%H:%M:%S')}'",
+                "$orderby": "start/dateTime",
+                "$select": "id,subject,body,start,end",
+            }
+            async with httpx.AsyncClient() as client:
+                resp = await client.get(
+                    self.BASE_URL, headers=headers, params=params, timeout=15,
+                )
+                if resp.status_code == 200:
+                    return resp.json().get("value", [])
+        except Exception as e:
+            logger.error("Outlook Calendar list exception: %s", e)
+        return []
+
+
+def get_calendar_service(account: MailAccount, db):
+    """Factory: returnér rigtig service baseret på provider."""
+    if account.provider == "gmail":
+        return GoogleCalendarService(account, db)
+    elif account.provider == "outlook":
+        return OutlookCalendarService(account, db)
+    raise ValueError(f"Ukendt provider: {account.provider}")

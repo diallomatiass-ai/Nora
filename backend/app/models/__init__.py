@@ -11,11 +11,12 @@ from app.models.customer import Customer
 from app.models.action_item import ActionItem
 from app.models.email_reminder import EmailReminder
 from app.models.calendar_account import CalendarAccount
+from app.models.calendar_event import CalendarEvent
 
 __all__ = [
     "User", "MailAccount", "EmailMessage", "AiSuggestion",
     "Template", "KnowledgeBase", "FeedbackLog",
     "AiSecretary", "SecretaryCall",
     "Customer", "ActionItem", "EmailReminder",
-    "CalendarAccount",
+    "CalendarAccount", "CalendarEvent",
 ]

@@ -53,11 +53,11 @@ export default function ConversationPanel({ emailId, onSelect }: Props) {
             className="w-full flex items-center justify-between px-4 py-3 text-left"
           >
             <div className="flex items-center gap-2">
-              <MessageSquare className="w-4 h-4 text-blue-500" />
+              <MessageSquare className="w-4 h-4 text-[#42D1B9]" />
               <span className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">
                 {t('conversationThread')}
               </span>
-              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300">
+              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-[#42D1B9]/15 text-[#162249] dark:bg-[#42D1B9]/20 dark:text-[#42D1B9]">
                 {thread.length}
               </span>
             </div>
@@ -71,12 +71,12 @@ export default function ConversationPanel({ emailId, onSelect }: Props) {
                   onClick={() => onSelect(email.id)}
                   className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
                     email.id === emailId
-                      ? 'bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30'
+                      ? 'bg-[#42D1B9]/10 border border-[#42D1B9]/25'
                       : 'hover:bg-[var(--surface-hover)]'
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className={`font-medium truncate ${email.id === emailId ? 'text-blue-700 dark:text-blue-300' : 'text-[var(--text-primary)]'}`}>
+                    <span className={`font-medium truncate ${email.id === emailId ? 'text-[#42D1B9]' : 'text-[var(--text-primary)]'}`}>
                       {email.from_name || email.from_address}
                     </span>
                     <span className="text-[10px] text-[var(--text-muted)] ml-2 flex-shrink-0">

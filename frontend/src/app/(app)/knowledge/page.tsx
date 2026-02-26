@@ -79,8 +79,8 @@ export default function KnowledgePage() {
     <div className="p-8 max-w-4xl animate-fadeIn">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2.5">
-          <div className="p-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-500/10">
-            <BookOpen className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+          <div className="p-1.5 rounded-lg bg-[#42D1B9]/10">
+            <BookOpen className="w-5 h-5 text-[#42D1B9]" />
           </div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-zinc-100">{t('knowledgeBase')}</h1>
         </div>
@@ -104,7 +104,7 @@ export default function KnowledgePage() {
             onClick={() => setActiveType(type)}
             className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-all ${
               activeType === type
-                ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                ? 'border-[#42D1B9] text-[#162249] dark:text-[#42D1B9]'
                 : 'border-transparent text-slate-500 dark:text-zinc-500 hover:text-slate-700 dark:hover:text-zinc-300'
             }`}
           >
@@ -182,7 +182,7 @@ export default function KnowledgePage() {
                   <p className="text-sm text-slate-500 dark:text-zinc-500 whitespace-pre-wrap">{entry.content}</p>
                 </div>
                 <div className="flex gap-1 ml-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => handleEdit(entry)} className="p-1.5 text-slate-400 dark:text-zinc-600 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors">
+                  <button onClick={() => handleEdit(entry)} className="p-1.5 text-slate-400 dark:text-zinc-600 hover:text-[#42D1B9] transition-colors">
                     <Pencil className="w-4 h-4" />
                   </button>
                   <button onClick={() => handleDelete(entry.id)} className="p-1.5 text-slate-400 dark:text-zinc-600 hover:text-red-500 dark:hover:text-red-400 transition-colors">
