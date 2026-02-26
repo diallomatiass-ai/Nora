@@ -46,6 +46,15 @@ class Settings(BaseSettings):
     ordrestyring_api_key: str = ""
     ordrestyring_default_case_status: str = ""
 
+    # Calendar OAuth2 redirect URIs
+    google_calendar_redirect_uri: str = ""
+    microsoft_calendar_redirect_uri: str = ""
+
+    # Twilio (for SMS-bekræftelser fra backend)
+    twilio_account_sid: str = ""
+    twilio_auth_token: str = ""
+    twilio_phone_number: str = ""
+
     model_config = {"env_file": ".env", "extra": "ignore"}
 
 
