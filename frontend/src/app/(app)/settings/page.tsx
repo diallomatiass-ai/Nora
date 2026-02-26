@@ -59,8 +59,8 @@ export default function SettingsPage() {
   return (
     <div className="p-8 max-w-3xl animate-fadeIn">
       <div className="flex items-center gap-2.5 mb-6">
-        <div className="p-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-500/10">
-          <Settings className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+        <div className="p-1.5 rounded-lg bg-[#42D1B9]/10">
+          <Settings className="w-5 h-5 text-[#42D1B9]" />
         </div>
         <h1 className="text-2xl font-bold text-slate-900 dark:text-zinc-100">{t('settings')}</h1>
       </div>
@@ -69,7 +69,7 @@ export default function SettingsPage() {
       <div className="glass-card mb-6 overflow-hidden">
         <div className="p-6 border-b border-slate-200 dark:border-white/[0.06]">
           <div className="flex items-center gap-2">
-            {theme === 'light' ? <Sun className="w-5 h-5 text-amber-500" /> : <Moon className="w-5 h-5 text-indigo-400" />}
+            {theme === 'light' ? <Sun className="w-5 h-5 text-amber-500" /> : <Moon className="w-5 h-5 text-[#42D1B9]" />}
             <h2 className="text-lg font-semibold text-slate-900 dark:text-zinc-100">{t('theme')}</h2>
           </div>
           <p className="text-sm text-slate-500 dark:text-zinc-500 mt-1">{t('themeDesc')}</p>
@@ -90,7 +90,7 @@ export default function SettingsPage() {
               onClick={() => setTheme('dark')}
               className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border rounded-lg transition-all ${
                 theme === 'dark'
-                  ? 'bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-500/30'
+                  ? 'bg-[#42D1B9]/10 text-[#162249] dark:text-[#42D1B9] border-[#42D1B9]/30'
                   : 'text-slate-500 dark:text-zinc-400 border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 hover:text-slate-700 dark:hover:text-zinc-200'
               }`}
             >
@@ -104,7 +104,7 @@ export default function SettingsPage() {
       <div className="glass-card mb-6 overflow-hidden">
         <div className="p-6 border-b border-slate-200 dark:border-white/[0.06]">
           <div className="flex items-center gap-2">
-            <Globe className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+            <Globe className="w-5 h-5 text-[#42D1B9]" />
             <h2 className="text-lg font-semibold text-slate-900 dark:text-zinc-100">{t('language')}</h2>
           </div>
           <p className="text-sm text-slate-500 dark:text-zinc-500 mt-1">{t('languageDesc')}</p>
@@ -115,7 +115,7 @@ export default function SettingsPage() {
               onClick={() => setLocale('da')}
               className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border rounded-lg transition-all ${
                 locale === 'da'
-                  ? 'bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-500/30'
+                  ? 'bg-[#42D1B9]/10 text-[#162249] dark:text-[#42D1B9] border-[#42D1B9]/30'
                   : 'text-slate-500 dark:text-zinc-400 border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 hover:text-slate-700 dark:hover:text-zinc-200'
               }`}
             >
@@ -125,7 +125,7 @@ export default function SettingsPage() {
               onClick={() => setLocale('en')}
               className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border rounded-lg transition-all ${
                 locale === 'en'
-                  ? 'bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-500/30'
+                  ? 'bg-[#42D1B9]/10 text-[#162249] dark:text-[#42D1B9] border-[#42D1B9]/30'
                   : 'text-slate-500 dark:text-zinc-400 border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 hover:text-slate-700 dark:hover:text-zinc-200'
               }`}
             >

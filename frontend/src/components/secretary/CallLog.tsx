@@ -119,7 +119,7 @@ export default function CallLog({ calls, onCallUpdated, onPushOrdrestyring }: Ca
                   {call.status !== 'resolved' && (
                     <span className={`px-2 py-0.5 rounded text-xs font-medium ${
                       call.status === 'new'
-                        ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400'
+                        ? 'bg-[#42D1B9]/15 text-[#162249] dark:bg-[#42D1B9]/20 dark:text-[#42D1B9]'
                         : 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400'
                     }`}>
                       {t((statusTranslation[call.status] || 'statusNew') as any)}
@@ -157,7 +157,7 @@ export default function CallLog({ calls, onCallUpdated, onPushOrdrestyring }: Ca
                 {call.status === 'new' && (
                   <button
                     onClick={(e) => { e.stopPropagation(); handleStatusChange(call.id, 'contacted') }}
-                    className="px-4 py-2 rounded-lg bg-[var(--surface-hover)] text-[var(--text-secondary)] text-sm font-medium hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-500/10 dark:hover:text-blue-400 transition-colors min-h-[44px]"
+                    className="px-4 py-2 rounded-lg bg-[var(--surface-hover)] text-[var(--text-secondary)] text-sm font-medium hover:bg-[#42D1B9]/10 hover:text-[#42D1B9] transition-colors min-h-[44px]"
                   >
                     {t('markedContacted')}
                   </button>
@@ -165,7 +165,7 @@ export default function CallLog({ calls, onCallUpdated, onPushOrdrestyring }: Ca
                 {call.customer_id && onPushOrdrestyring && (
                   <button
                     onClick={(e) => { e.stopPropagation(); onPushOrdrestyring(call.customer_id!) }}
-                    className="px-4 py-2 rounded-lg bg-[var(--surface-hover)] text-[var(--text-secondary)] text-sm font-medium hover:bg-indigo-50 hover:text-indigo-700 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-400 transition-colors min-h-[44px]"
+                    className="px-4 py-2 rounded-lg bg-[var(--surface-hover)] text-[var(--text-secondary)] text-sm font-medium hover:bg-[#42D1B9]/10 hover:text-[#42D1B9] transition-colors min-h-[44px]"
                   >
                     → Ordrestyring
                   </button>
@@ -202,7 +202,7 @@ export default function CallLog({ calls, onCallUpdated, onPushOrdrestyring }: Ca
                   <div className="flex items-center gap-3">
                     <Link
                       href={`/customers/${call.customer_id}`}
-                      className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                      className="inline-flex items-center gap-1.5 text-sm font-medium text-[#42D1B9] hover:text-[#56DEC8] transition-colors"
                     >
                       <Users className="w-4 h-4" />
                       {t('viewCustomer')}
@@ -210,7 +210,7 @@ export default function CallLog({ calls, onCallUpdated, onPushOrdrestyring }: Ca
                     {onPushOrdrestyring && (
                       <button
                         onClick={() => onPushOrdrestyring(call.customer_id!)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-500/10 dark:text-indigo-400 dark:hover:bg-indigo-500/20 transition-colors"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-[#42D1B9]/10 text-[#162249] dark:text-[#42D1B9] hover:bg-[#42D1B9]/20 transition-colors"
                       >
                         → Ordrestyring
                       </button>
@@ -258,7 +258,7 @@ export default function CallLog({ calls, onCallUpdated, onPushOrdrestyring }: Ca
                       className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors min-h-[44px] ${
                         call.status === s
                           ? s === 'new'
-                            ? 'bg-blue-600 text-white'
+                            ? 'bg-[#42D1B9] text-[#0D1B3E]'
                             : s === 'contacted'
                             ? 'bg-amber-500 text-white'
                             : 'bg-green-600 text-white'
@@ -282,7 +282,7 @@ export default function CallLog({ calls, onCallUpdated, onPushOrdrestyring }: Ca
                     onBlur={() => handleSaveNotes(call.id)}
                     rows={2}
                     placeholder="Tilføj noter..."
-                    className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-sm text-[var(--text-primary)] focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none min-h-[44px]"
+                    className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-sm text-[var(--text-primary)] focus:ring-2 focus:ring-[#42D1B9] focus:border-transparent resize-none min-h-[44px]"
                   />
                 </div>
               </div>

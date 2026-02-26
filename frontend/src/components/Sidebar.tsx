@@ -74,11 +74,11 @@ export default function Sidebar() {
                 href={item.href}
                 className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
                   isActive
-                    ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400'
+                    ? 'bg-[#42D1B9]/10 text-[#162249] dark:text-[#42D1B9]'
                     : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]'
                 }`}
               >
-                <Icon className={`w-6 h-6 ${isActive ? 'text-blue-600 dark:text-blue-400' : ''}`} />
+                <Icon className={`w-6 h-6 ${isActive ? 'text-[#42D1B9]' : ''}`} />
                 <span className="flex-1">{item.label}</span>
                 {item.badge > 0 && (
                   <span className="min-w-[22px] h-[22px] flex items-center justify-center rounded-full bg-red-600 text-white text-xs font-bold px-1.5">
@@ -113,7 +113,7 @@ export default function Sidebar() {
                 href={item.href}
                 className={`flex flex-col items-center justify-center gap-0.5 flex-1 h-full relative ${
                   isActive
-                    ? 'text-blue-600 dark:text-blue-400'
+                    ? 'text-[#42D1B9]'
                     : 'text-[var(--text-muted)]'
                 }`}
               >

@@ -3,12 +3,12 @@
 import { useTranslation } from '@/lib/i18n'
 
 const categoryColors: Record<string, string> = {
-  inquiry: 'bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400',
+  inquiry: 'bg-[#42D1B9]/10 text-[#162249] dark:text-[#42D1B9]',
   complaint: 'bg-red-50 dark:bg-red-500/15 text-red-600 dark:text-red-400',
   order: 'bg-green-50 dark:bg-green-500/15 text-green-600 dark:text-green-400',
   support: 'bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400',
   spam: 'bg-slate-100 dark:bg-zinc-700/50 text-slate-500 dark:text-zinc-500',
-  other: 'bg-purple-50 dark:bg-purple-500/15 text-purple-600 dark:text-purple-400',
+  other: 'bg-slate-100 dark:bg-white/[0.06] text-slate-500 dark:text-slate-400',
 }
 
 const urgencyDots: Record<string, string> = {
@@ -52,13 +52,13 @@ export default function InboxList({ emails, onSelect, selectedId }: Props) {
           onClick={() => onSelect(email.id)}
           className={`w-full text-left px-4 py-3 transition-all duration-200 flex items-start gap-3 ${
             selectedId === email.id
-              ? 'bg-indigo-50 dark:bg-indigo-500/10 border-l-2 border-l-indigo-500'
+              ? 'bg-[#42D1B9]/10 border-l-2 border-l-[#42D1B9]'
               : 'hover:bg-slate-50 dark:hover:bg-white/[0.03] border-l-2 border-l-transparent'
           }`}
         >
           <div className="pt-1.5 flex-shrink-0">
             {!email.is_read ? (
-              <div className="w-2.5 h-2.5 rounded-full bg-indigo-500 animate-pulse-glow" />
+              <div className="w-2.5 h-2.5 rounded-full bg-[#42D1B9] animate-pulse-glow" />
             ) : (
               <div className="w-2.5 h-2.5" />
             )}
@@ -80,7 +80,7 @@ export default function InboxList({ emails, onSelect, selectedId }: Props) {
                 </span>
               )}
               {email.urgency && <div className={`w-2 h-2 rounded-full ${urgencyDots[email.urgency] || ''}`} />}
-              {email.has_suggestion && <span className="text-xs text-indigo-600 dark:text-indigo-400 font-medium">AI</span>}
+              {email.has_suggestion && <span className="text-xs text-[#42D1B9] font-medium">AI</span>}
               {email.is_replied && <span className="text-xs text-green-600 dark:text-green-400">{t('replied')}</span>}
             </div>
           </div>

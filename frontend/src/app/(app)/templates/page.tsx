@@ -169,7 +169,7 @@ export default function TemplatesPage() {
                   <p className="text-sm text-slate-500 dark:text-zinc-500 line-clamp-2">{tmpl.body}</p>
                 </div>
                 <div className="flex gap-1 ml-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => handleEdit(tmpl)} className="p-1.5 text-slate-400 dark:text-zinc-600 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors">
+                  <button onClick={() => handleEdit(tmpl)} className="p-1.5 text-slate-400 dark:text-zinc-600 hover:text-[#42D1B9] transition-colors">
                     <Pencil className="w-4 h-4" />
                   </button>
                   <button onClick={() => handleDelete(tmpl.id)} className="p-1.5 text-slate-400 dark:text-zinc-600 hover:text-red-500 dark:hover:text-red-400 transition-colors">

@@ -151,7 +151,7 @@ export default function InboxPage() {
   const pillClass = (active: boolean) =>
     `px-3 py-2 text-xs font-medium rounded-lg border transition-colors ${
       active
-        ? 'bg-blue-600 text-white border-blue-600'
+        ? 'bg-[#162249] dark:bg-[#42D1B9]/20 text-white dark:text-[#42D1B9] border-[#162249] dark:border-[#42D1B9]/40'
         : 'bg-[var(--surface)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--text-muted)] hover:text-[var(--text-primary)]'
     }`
 
@@ -170,7 +170,7 @@ export default function InboxPage() {
         <div className="flex items-center gap-2">
           <h1 className="text-base font-bold text-[var(--text-primary)] mr-1">{t('inbox')}</h1>
           {unreadCount > 0 && view === 'inbox' && (
-            <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-blue-600 text-white mr-1">
+            <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-[#162249] dark:bg-[#42D1B9] text-white dark:text-[#0D1B3E] mr-1">
               {unreadCount}
             </span>
           )}
@@ -181,12 +181,12 @@ export default function InboxPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t('searchPlaceholder')}
-              className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--text-primary)] focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-[var(--text-muted)]"
+              className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--text-primary)] focus:ring-2 focus:ring-[#42D1B9] focus:border-transparent placeholder:text-[var(--text-muted)]"
             />
           </div>
           <button
             onClick={() => setComposeOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors ml-auto"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-[#162249] hover:bg-[#1e2d6b] text-white transition-colors ml-auto"
           >
             <PenSquare className="w-3.5 h-3.5" />
             {t('newEmail')}
@@ -199,7 +199,7 @@ export default function InboxPage() {
             onClick={() => { setView('inbox'); setSelectedId(null); setSelectedEmail(null) }}
             className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
               view === 'inbox'
-                ? 'bg-blue-600 text-white'
+                ? 'bg-[#162249] dark:bg-[#42D1B9]/20 text-white dark:text-[#42D1B9]'
                 : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover)]'
             }`}
           >
@@ -209,7 +209,7 @@ export default function InboxPage() {
             onClick={() => { setView('sent'); setSelectedId(null); setSelectedEmail(null) }}
             className={`inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
               view === 'sent'
-                ? 'bg-blue-600 text-white'
+                ? 'bg-[#162249] dark:bg-[#42D1B9]/20 text-white dark:text-[#42D1B9]'
                 : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover)]'
             }`}
           >
@@ -327,7 +327,7 @@ export default function InboxPage() {
                     key={item.id}
                     onClick={() => item.original_email_id ? handleSelect(item.original_email_id) : null}
                     className={`w-full text-left px-4 py-3 hover:bg-[var(--surface-hover)] transition-colors ${
-                      selectedId && selectedId === item.original_email_id ? 'bg-blue-50 dark:bg-blue-500/10' : ''
+                      selectedId && selectedId === item.original_email_id ? 'bg-[#42D1B9]/10' : ''
                     }`}
                   >
                     <div className="flex items-center justify-between">
@@ -344,7 +344,7 @@ export default function InboxPage() {
                     )}
                     <span className={`inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded ${
                       item.type === 'compose'
-                        ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300'
+                        ? 'bg-[#42D1B9]/15 text-[#162249] dark:bg-[#42D1B9]/20 dark:text-[#42D1B9]'
                         : 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300'
                     }`}>
                       {item.type === 'compose' ? t('newEmail') : 'AI-svar'}
@@ -366,7 +366,7 @@ export default function InboxPage() {
                   <button
                     onClick={handleGenerate}
                     disabled={generating}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50 transition-colors"
+                    className="btn-primary inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg disabled:opacity-50"
                   >
                     {generating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
                     {generating ? 'Genererer...' : 'Generer AI-forslag'}
@@ -404,7 +404,7 @@ export default function InboxPage() {
                         <button
                           onClick={handleGenerate}
                           disabled={generating}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-indigo-100 dark:bg-indigo-500/20 hover:bg-indigo-200 dark:hover:bg-indigo-500/30 text-indigo-700 dark:text-indigo-300 disabled:opacity-50 transition-colors"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-[#42D1B9]/15 dark:bg-[#42D1B9]/20 hover:bg-[#42D1B9]/25 text-[#162249] dark:text-[#42D1B9] disabled:opacity-50 transition-colors"
                         >
                           {generating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
                           {generating ? 'Genererer...' : 'Generer AI-forslag nu'}
@@ -435,7 +435,7 @@ export default function InboxPage() {
                         {selectedEmail.confidence != null && (
                           <div className="flex justify-between">
                             <span className="text-[var(--text-muted)]">{t('confidence')}</span>
-                            <span className="font-medium text-indigo-600 dark:text-indigo-400">{Math.round(selectedEmail.confidence * 100)}%</span>
+                            <span className="font-medium text-[#42D1B9]">{Math.round(selectedEmail.confidence * 100)}%</span>
                           </div>
                         )}
                       </div>

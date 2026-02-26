@@ -80,7 +80,7 @@ export default function ScriptEditor({
       {/* ── Velkomsthilsen ── */}
       <div>
         <h3 className="text-sm font-bold text-[var(--text-primary)] flex items-center gap-2 mb-3">
-          <MessageSquare className="w-4 h-4 text-blue-500" />
+          <MessageSquare className="w-4 h-4 text-[#42D1B9]" />
           {t('greeting')}
         </h3>
         <textarea
@@ -88,7 +88,7 @@ export default function ScriptEditor({
           onChange={(e) => onGreetingChange(e.target.value)}
           rows={4}
           placeholder={businessName ? `Hej! Du har ringet til ${businessName}...` : 'Hej! Du har ringet til...'}
-          className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-sm text-[var(--text-primary)] focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+          className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-sm text-[var(--text-primary)] focus:ring-2 focus:ring-[#42D1B9] focus:border-transparent resize-none"
         />
         <p className="text-xs text-[var(--text-muted)] mt-1">
           Velkomstteksten AI'en bruger når den svarer opkald.
@@ -98,7 +98,7 @@ export default function ScriptEditor({
       {/* ── Påkrævede felter ── */}
       <div>
         <h3 className="text-sm font-bold text-[var(--text-primary)] flex items-center gap-2 mb-3">
-          <ClipboardList className="w-4 h-4 text-blue-500" />
+          <ClipboardList className="w-4 h-4 text-[#42D1B9]" />
           {t('requiredFieldsLabel')}
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -110,13 +110,13 @@ export default function ScriptEditor({
                 onClick={() => toggleField(key)}
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg border-2 cursor-pointer transition-all select-none min-h-[48px] ${
                   isChecked
-                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10'
+                    ? 'border-[#42D1B9] bg-[#42D1B9]/10'
                     : 'border-[var(--border)] bg-[var(--surface)] hover:border-blue-300 hover:bg-[var(--surface-hover)]'
                 }`}
               >
                 <div
                   className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 transition-all ${
-                    isChecked ? 'bg-blue-600' : 'border-2 border-[var(--border)] bg-[var(--surface)]'
+                    isChecked ? 'bg-[#42D1B9]' : 'border-2 border-[var(--border)] bg-[var(--surface)]'
                   }`}
                 >
                   {isChecked && (
@@ -127,7 +127,7 @@ export default function ScriptEditor({
                 </div>
                 <span
                   className={`text-sm font-medium ${
-                    isChecked ? 'text-blue-700 dark:text-blue-300' : 'text-[var(--text-primary)]'
+                    isChecked ? 'text-[#162249] dark:text-[#42D1B9]' : 'text-[var(--text-primary)]'
                   }`}
                 >
                   {t(labelKey as any)}
@@ -144,7 +144,7 @@ export default function ScriptEditor({
       {/* ── Vidensbase (FAQ) ── */}
       <div>
         <h3 className="text-sm font-bold text-[var(--text-primary)] flex items-center gap-2 mb-3">
-          <BookOpen className="w-4 h-4 text-blue-500" />
+          <BookOpen className="w-4 h-4 text-[#42D1B9]" />
           {t('knowledgeItemsLabel')}
         </h3>
 
@@ -161,14 +161,14 @@ export default function ScriptEditor({
                     value={key}
                     onChange={(e) => updateKnowledgeKey(key, e.target.value)}
                     placeholder={t('key')}
-                    className="px-2.5 py-1.5 rounded border border-[var(--border)] bg-[var(--bg)] text-sm text-[var(--text-primary)] focus:ring-1 focus:ring-blue-500 focus:border-transparent min-h-[36px]"
+                    className="px-2.5 py-1.5 rounded border border-[var(--border)] bg-[var(--bg)] text-sm text-[var(--text-primary)] focus:ring-1 focus:ring-[#42D1B9] focus:border-transparent min-h-[36px]"
                   />
                   <input
                     type="text"
                     value={value}
                     onChange={(e) => updateKnowledgeValue(key, e.target.value)}
                     placeholder={t('value')}
-                    className="px-2.5 py-1.5 rounded border border-[var(--border)] bg-[var(--bg)] text-sm text-[var(--text-primary)] focus:ring-1 focus:ring-blue-500 focus:border-transparent min-h-[36px]"
+                    className="px-2.5 py-1.5 rounded border border-[var(--border)] bg-[var(--bg)] text-sm text-[var(--text-primary)] focus:ring-1 focus:ring-[#42D1B9] focus:border-transparent min-h-[36px]"
                   />
                 </div>
                 <button
@@ -194,7 +194,7 @@ export default function ScriptEditor({
                 if (e.key === 'Enter') addKnowledgeItem()
               }}
               placeholder={t('key') + ' (f.eks. Åbningstider)'}
-              className="px-2.5 py-1.5 rounded border border-[var(--border)] bg-[var(--surface)] text-sm text-[var(--text-primary)] focus:ring-1 focus:ring-blue-500 focus:border-transparent min-h-[36px]"
+              className="px-2.5 py-1.5 rounded border border-[var(--border)] bg-[var(--surface)] text-sm text-[var(--text-primary)] focus:ring-1 focus:ring-[#42D1B9] focus:border-transparent min-h-[36px]"
             />
             <input
               type="text"
@@ -204,13 +204,13 @@ export default function ScriptEditor({
                 if (e.key === 'Enter') addKnowledgeItem()
               }}
               placeholder={t('value') + ' (f.eks. Man-fre 8-17)'}
-              className="px-2.5 py-1.5 rounded border border-[var(--border)] bg-[var(--surface)] text-sm text-[var(--text-primary)] focus:ring-1 focus:ring-blue-500 focus:border-transparent min-h-[36px]"
+              className="px-2.5 py-1.5 rounded border border-[var(--border)] bg-[var(--surface)] text-sm text-[var(--text-primary)] focus:ring-1 focus:ring-[#42D1B9] focus:border-transparent min-h-[36px]"
             />
           </div>
           <button
             onClick={addKnowledgeItem}
             disabled={!newKey.trim() || !newValue.trim()}
-            className="p-1.5 rounded text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
+            className="p-1.5 rounded text-[#42D1B9] hover:bg-[#42D1B9]/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
             aria-label={t('addKnowledge')}
           >
             <Plus className="w-5 h-5" />

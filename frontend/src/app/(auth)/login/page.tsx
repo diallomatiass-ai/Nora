@@ -49,8 +49,8 @@ export default function LoginPage() {
       />
 
       {/* Gradient orbs */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full bg-indigo-500/10 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/3 w-[300px] h-[300px] rounded-full bg-purple-500/8 blur-[100px] pointer-events-none" />
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full bg-[#42D1B9]/10 blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/3 w-[300px] h-[300px] rounded-full bg-[#162249]/20 blur-[100px] pointer-events-none" />
 
       <div className="w-full max-w-md relative z-10 animate-slideUp">
         <div className="flex flex-col items-center mb-8">
@@ -105,7 +105,7 @@ export default function LoginPage() {
             {isLogin ? t('noAccount') : t('hasAccount')}{' '}
             <button
               onClick={() => { setIsLogin(!isLogin); setError('') }}
-              className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 font-medium transition-colors"
+              className="text-[#42D1B9] hover:text-[#56DEC8] font-medium transition-colors"
             >
               {isLogin ? t('signUp') : t('signIn')}
             </button>

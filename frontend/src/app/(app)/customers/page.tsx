@@ -27,9 +27,9 @@ interface CustomerDashboard {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  ny_henvendelse: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300',
+  ny_henvendelse: 'bg-[#42D1B9]/15 text-[#162249] dark:bg-[#42D1B9]/20 dark:text-[#42D1B9]',
   kontaktet: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300',
-  tilbud_sendt: 'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300',
+  tilbud_sendt: 'bg-[#162249]/10 text-[#162249] dark:bg-[#42D1B9]/10 dark:text-[#a8bdd6]',
   tilbud_accepteret: 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-300',
   afsluttet: 'bg-slate-100 text-slate-500 dark:bg-slate-500/20 dark:text-slate-400',
   tilbud_afvist: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400',
@@ -195,8 +195,8 @@ export default function CustomersPage() {
         {/* Total kunder */}
         <div className="card p-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-500/20">
-              <Users className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+            <div className="p-2 rounded-lg bg-[#42D1B9]/10">
+              <Users className="w-4 h-4 text-[#42D1B9]" />
             </div>
             <div>
               <p className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
@@ -229,8 +229,8 @@ export default function CustomersPage() {
         {/* Pipeline-værdi */}
         <div className="card p-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-500/20">
-              <TrendingUp className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+            <div className="p-2 rounded-lg bg-[#162249]/10 dark:bg-[#42D1B9]/10">
+              <TrendingUp className="w-4 h-4 text-[#162249] dark:text-[#42D1B9]" />
             </div>
             <div>
               <p className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
@@ -325,7 +325,7 @@ export default function CustomersPage() {
           {!debouncedSearch && !statusFilter && (
             <button
               onClick={() => setShowModal(true)}
-              className="mt-4 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+              className="mt-4 text-sm text-[#42D1B9] hover:text-[#56DEC8] hover:underline"
             >
               Opret din første kunde
             </button>
@@ -385,7 +385,7 @@ export default function CustomersPage() {
                       {customer.phone ? (
                         <a
                           href={`tel:${customer.phone}`}
-                          className="text-blue-600 dark:text-blue-400 hover:underline"
+                          className="text-[#42D1B9] hover:text-[#56DEC8] hover:underline"
                         >
                           {customer.phone}
                         </a>
@@ -399,7 +399,7 @@ export default function CustomersPage() {
                       {customer.email ? (
                         <a
                           href={`mailto:${customer.email}`}
-                          className="text-blue-600 dark:text-blue-400 hover:underline truncate max-w-[180px] block"
+                          className="text-[#42D1B9] hover:text-[#56DEC8] hover:underline truncate max-w-[180px] block"
                         >
                           {customer.email}
                         </a>
@@ -451,7 +451,7 @@ export default function CustomersPage() {
                     <td className="px-4 py-3 text-right">
                       <Link
                         href={`/customers/${customer.id}`}
-                        className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline whitespace-nowrap"
+                        className="text-xs font-medium text-[#42D1B9] hover:text-[#56DEC8] hover:underline whitespace-nowrap"
                       >
                         Se detaljer →
                       </Link>

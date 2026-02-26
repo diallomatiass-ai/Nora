@@ -151,7 +151,7 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
                   i < step
                     ? 'bg-green-600 text-white'
                     : i === step
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-[#162249] dark:bg-[#42D1B9] text-white dark:text-[#0D1B3E]'
                     : 'bg-[var(--surface-hover)] text-[var(--text-muted)]'
                 }`}
               >
@@ -205,7 +205,7 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
                   onClick={() => setSelectedIndustry(ind.id)}
                   className={`px-4 py-4 rounded-xl border-2 text-left transition-all min-h-[64px] ${
                     selectedIndustry === ind.id
-                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300'
+                      ? 'border-[#42D1B9] bg-[#42D1B9]/10 text-[#162249] dark:text-[#42D1B9]'
                       : 'border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] hover:border-blue-300 hover:bg-[var(--surface-hover)]'
                   }`}
                 >
@@ -242,7 +242,7 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
                 setTemplateLoaded(false)
               }}
               placeholder="f.eks. Andersens VVS ApS"
-              className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-sm text-[var(--text-primary)] focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[44px]"
+              className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-sm text-[var(--text-primary)] focus:ring-2 focus:ring-[#42D1B9] focus:border-transparent min-h-[44px]"
             />
           </div>
 
@@ -255,7 +255,7 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
               placeholder="f.eks. +45 12 34 56 78"
-              className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-sm text-[var(--text-primary)] focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[44px]"
+              className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-sm text-[var(--text-primary)] focus:ring-2 focus:ring-[#42D1B9] focus:border-transparent min-h-[44px]"
             />
           </div>
 
@@ -269,7 +269,7 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
               onChange={(e) => setCvrNumber(e.target.value)}
               placeholder="f.eks. 12345678"
               maxLength={8}
-              className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-sm text-[var(--text-primary)] focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[44px]"
+              className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-sm text-[var(--text-primary)] focus:ring-2 focus:ring-[#42D1B9] focus:border-transparent min-h-[44px]"
             />
           </div>
         </div>
@@ -300,7 +300,7 @@ export default function SetupWizard({ onComplete }: SetupWizardProps) {
                   onChange={(e) => setGreetingText(e.target.value)}
                   rows={4}
                   placeholder="Hej! Du har ringet til..."
-                  className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-sm text-[var(--text-primary)] focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-sm text-[var(--text-primary)] focus:ring-2 focus:ring-[#42D1B9] focus:border-transparent resize-none"
                 />
               </div>
 

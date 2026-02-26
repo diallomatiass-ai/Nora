@@ -69,9 +69,9 @@ const STATUS_LABELS: Record<string, string> = {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  ny_henvendelse: 'bg-blue-500',
+  ny_henvendelse: 'bg-[#42D1B9]',
   kontaktet: 'bg-amber-500',
-  tilbud_sendt: 'bg-purple-500',
+  tilbud_sendt: 'bg-[#162249]',
   tilbud_accepteret: 'bg-green-500',
   afsluttet: 'bg-slate-400',
   tilbud_afvist: 'bg-red-500',
@@ -204,7 +204,7 @@ export default function CustomerDetailPage() {
     return (
       <div className="p-6 text-center">
         <p className="text-dim">Kunde ikke fundet</p>
-        <Link href="/customers" className="text-indigo-500 text-sm mt-2 inline-block">{t('back')}</Link>
+        <Link href="/customers" className="text-[#42D1B9] text-sm mt-2 inline-block">{t('back')}</Link>
       </div>
     )
   }
@@ -280,13 +280,13 @@ export default function CustomerDetailPage() {
               {customer.phone && (
                 <div className="flex items-center gap-2 text-sm">
                   <Phone className="w-4 h-4 text-dim" />
-                  <a href={`tel:${customer.phone}`} className="text-indigo-500 hover:underline">{customer.phone}</a>
+                  <a href={`tel:${customer.phone}`} className="text-[#42D1B9] hover:underline">{customer.phone}</a>
                 </div>
               )}
               {customer.email && (
                 <div className="flex items-center gap-2 text-sm">
                   <Mail className="w-4 h-4 text-dim" />
-                  <a href={`mailto:${customer.email}`} className="text-indigo-500 hover:underline">{customer.email}</a>
+                  <a href={`mailto:${customer.email}`} className="text-[#42D1B9] hover:underline">{customer.email}</a>
                 </div>
               )}
               {(customer.address_street || customer.address_city) && (
@@ -335,7 +335,7 @@ export default function CustomerDetailPage() {
                   <button
                     onClick={handlePushOrdrestyring}
                     disabled={pushingOrdrestyring}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-sm font-semibold transition-colors"
+                    className="btn-primary w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold disabled:opacity-60"
                   >
                     {pushingOrdrestyring ? (
                       t('pushingToOrdrestyring')
@@ -421,7 +421,7 @@ export default function CustomerDetailPage() {
                           </button>
                           <button
                             onClick={() => generateDraft(item.id)}
-                            className="p-1.5 rounded-lg text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-all"
+                            className="p-1.5 rounded-lg text-[#42D1B9] hover:bg-[#42D1B9]/10 transition-all"
                             title={t('generateFollowup')}
                           >
                             <Send className="w-4 h-4" />
@@ -448,7 +448,7 @@ export default function CustomerDetailPage() {
                     <div className="flex flex-col items-center">
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                         item.type === 'email'
-                          ? 'bg-indigo-100 dark:bg-indigo-500/20 text-indigo-500'
+                          ? 'bg-[#42D1B9]/15 dark:bg-[#42D1B9]/20 text-[#42D1B9]'
                           : item.type === 'call'
                             ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-500'
                             : 'bg-amber-100 dark:bg-amber-500/20 text-amber-500'
