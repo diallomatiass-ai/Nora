@@ -30,9 +30,14 @@ class Settings(BaseSettings):
     outlook_tenant_id: str = "common"
     outlook_redirect_uri: str = ""
 
-    # Ollama
-    ollama_base_url: str = "http://ollama:11434"
-    ollama_model: str = "mistral:7b-instruct"
+    # Claude API (Anthropic)
+    anthropic_api_key: str = ""
+    claude_model: str = "claude-sonnet-4-6"       # Svargenerering + chat
+    claude_fast_model: str = "claude-haiku-4-5-20251001"  # Klassificering (hurtig + billig)
+
+    # Ollama (bruges stadig til embeddings — Anthropic har intet embedding-API)
+    ollama_base_url: str = "http://localhost:11434"
+    ollama_model: str = "mistral:7b-instruct"     # Fallback hvis Claude API er nede
     ollama_embed_model: str = "nomic-embed-text"
 
     # ChromaDB

@@ -1,4 +1,4 @@
-"""Ollama-based AI engine for email classification and reply generation."""
+"""Claude API-based AI engine for email classification and reply generation."""
 
 from __future__ import annotations
 
@@ -7,6 +7,7 @@ import logging
 from typing import TYPE_CHECKING
 
 import httpx
+import anthropic
 from sqlalchemy import select
 
 from app.config import settings
@@ -21,12 +22,14 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-# Default timeout for Ollama requests (generation can be slow on large models)
-_OLLAMA_TIMEOUT = httpx.Timeout(300.0, connect=10.0)
+# Anthropic klient (sync — bruges via asyncio.to_thread)
+_anthropic_client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
 
 
 async def get_embedding(text: str) -> list[float]:
     """Get an embedding vector from the Ollama nomic-embed-text model.
+
+    Anthropic har ikke et embedding-API — Ollama bruges stadig til embeddings.
 
     Args:
         text: The text to embed.
@@ -40,109 +43,116 @@ async def get_embedding(text: str) -> list[float]:
         "prompt": text,
     }
 
-    async with httpx.AsyncClient(timeout=60.0) as client:
-        response = await client.post(url, json=payload)
-        response.raise_for_status()
-        data = response.json()
-        return data["embedding"]
+    try:
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            response = await client.post(url, json=payload)
+            response.raise_for_status()
+            data = response.json()
+            return data["embedding"]
+    except Exception as exc:
+        logger.warning("Embedding API fejl: %s — returnerer tom vektor", exc)
+        return []
 
 
-async def _call_ollama_generate(prompt: str) -> str:
-    """Send a generation request to the Ollama API and return the response text.
+def _call_claude(prompt: str, model: str | None = None, max_tokens: int = 1024) -> str:
+    """Kald Claude API synkront og returnér svartekst.
 
     Args:
-        prompt: The full prompt to send to the model.
+        prompt: Prompten der sendes til Claude.
+        model: Model-ID — defaults til settings.claude_model.
+        max_tokens: Maks antal output-tokens.
 
     Returns:
-        The generated text response.
+        Genereret tekst fra Claude.
     """
-    url = f"{settings.ollama_base_url}/api/generate"
-    payload = {
-        "model": settings.ollama_model,
-        "prompt": prompt,
-        "stream": False,
-        "options": {"num_ctx": 2048},
-    }
+    chosen_model = model or settings.claude_model
+    message = _anthropic_client.messages.create(
+        model=chosen_model,
+        max_tokens=max_tokens,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    return message.content[0].text
 
-    async with httpx.AsyncClient(timeout=_OLLAMA_TIMEOUT) as client:
-        response = await client.post(url, json=payload)
-        response.raise_for_status()
-        data = response.json()
-        return data.get("response", "")
+
+async def _call_claude_async(prompt: str, model: str | None = None, max_tokens: int = 1024) -> str:
+    """Asynkron wrapper til _call_claude via asyncio.to_thread.
+
+    Args:
+        prompt: Prompten der sendes til Claude.
+        model: Model-ID.
+        max_tokens: Maks antal output-tokens.
+
+    Returns:
+        Genereret tekst fra Claude.
+    """
+    import asyncio
+    return await asyncio.to_thread(_call_claude, prompt, model, max_tokens)
 
 
 async def classify_email(subject: str, body: str) -> dict:
-    """Classify an email using the Ollama LLM.
-
-    Sends a classification prompt and parses the JSON response. Returns
-    a dict with category, urgency, topic, and confidence.
+    """Klassificér en email med Claude Haiku (hurtig + billig).
 
     Args:
-        subject: The email subject line.
-        body: The plain-text email body.
+        subject: Email-emnelinjen.
+        body: Email-brødteksten.
 
     Returns:
-        Dict with keys: category, urgency, topic, confidence.
-        Falls back to safe defaults on parse errors.
+        Dict med category, urgency, topic, confidence.
     """
     prompt = build_classification_prompt(subject, body)
 
     try:
-        raw_response = await _call_ollama_generate(prompt)
-    except httpx.HTTPError as exc:
-        logger.error("Ollama API error during classification: %s", exc)
+        raw_response = await _call_claude_async(
+            prompt,
+            model=settings.claude_fast_model,
+            max_tokens=256,
+        )
+    except anthropic.APIError as exc:
+        logger.error("Claude API fejl under klassificering: %s", exc)
         return _default_classification()
 
     return _parse_classification_response(raw_response)
 
 
 def _parse_classification_response(raw: str) -> dict:
-    """Attempt to parse the LLM classification response as JSON.
-
-    Handles common issues like markdown code fences wrapping the JSON.
+    """Parse LLM klassificerings-svar som JSON.
 
     Args:
-        raw: The raw text response from the LLM.
+        raw: Råtekst fra LLM.
 
     Returns:
-        Parsed classification dict, or defaults on failure.
+        Parsed klassificerings-dict, eller defaults ved fejl.
     """
     text = raw.strip()
 
-    # Strip markdown code fences if present
+    # Fjern markdown code fences hvis til stede
     if text.startswith("```"):
         lines = text.split("\n")
-        # Remove first line (```json or ```) and last line (```)
-        lines = [
-            line
-            for line in lines
-            if not line.strip().startswith("```")
-        ]
+        lines = [line for line in lines if not line.strip().startswith("```")]
         text = "\n".join(lines).strip()
 
     try:
         data = json.loads(text)
     except json.JSONDecodeError:
-        # Try to find JSON object in the response
         start = text.find("{")
         end = text.rfind("}")
         if start != -1 and end != -1 and end > start:
             try:
                 data = json.loads(text[start : end + 1])
             except json.JSONDecodeError:
-                logger.warning("Failed to parse classification JSON: %s", text[:200])
+                logger.warning("Kunne ikke parse klassificerings-JSON: %s", text[:200])
                 return _default_classification()
         else:
-            logger.warning("No JSON object found in classification response: %s", text[:200])
+            logger.warning("Intet JSON-objekt fundet i klassificerings-svar: %s", text[:200])
             return _default_classification()
 
-    # Validate and normalize fields
-    valid_categories = {"inquiry", "complaint", "order", "support", "spam", "other"}
+    valid_categories = {"tilbud", "booking", "reklamation", "faktura", "leverandor", "intern", "spam", "andet",
+                        "inquiry", "complaint", "order", "support", "other"}
     valid_urgencies = {"high", "medium", "low"}
 
-    category = str(data.get("category", "other")).lower()
+    category = str(data.get("category", "andet")).lower()
     if category not in valid_categories:
-        category = "other"
+        category = "andet"
 
     urgency = str(data.get("urgency", "medium")).lower()
     if urgency not in valid_urgencies:
@@ -165,9 +175,9 @@ def _parse_classification_response(raw: str) -> dict:
 
 
 def _default_classification() -> dict:
-    """Return safe default classification values."""
+    """Returnér sikre standard klassificeringsværdier."""
     return {
-        "category": "other",
+        "category": "andet",
         "urgency": "medium",
         "topic": "",
         "confidence": 0.0,
@@ -177,33 +187,32 @@ def _default_classification() -> dict:
 async def generate_reply(
     email: EmailMessage, user: User, db: AsyncSession
 ) -> str:
-    """Orchestrate the full reply generation pipeline.
+    """Orkestrér fuld svargenererings-pipeline med Claude Sonnet.
 
-    Steps:
-      1. Search ChromaDB for relevant knowledge base entries.
-      2. Search ChromaDB for similar previously approved replies.
-      3. Fetch matching templates from the database.
-      4. Build the reply prompt with all context.
-      5. Call Ollama to generate the reply.
+    Trin:
+      1. Søg ChromaDB efter relevante videnbase-poster.
+      2. Søg ChromaDB efter lignende tidligere godkendte svar.
+      3. Hent matchende skabeloner fra databasen.
+      4. Byg reply-prompt med al kontekst.
+      5. Kald Claude Sonnet for at generere svaret.
 
     Args:
-        email: The EmailMessage to reply to.
-        user: The User who owns the mailbox.
-        db: An async database session.
+        email: EmailMessage der skal besvares.
+        user: Ejeren af mailkontoen.
+        db: Async database session.
 
     Returns:
-        The generated reply text.
+        Genereret svartekst.
     """
     user_id_str = str(user.id)
     query_text = f"{email.subject or ''} {email.body_text or ''}"
 
-    # 1 & 2: Search ChromaDB in parallel-style (sequential but fast)
     try:
         knowledge_context = await search_knowledge(
             query=query_text, user_id=user_id_str, n_results=3
         )
     except Exception as exc:
-        logger.warning("Knowledge search failed: %s", exc)
+        logger.warning("Videnbase-søgning fejlede: %s", exc)
         knowledge_context = []
 
     try:
@@ -211,10 +220,9 @@ async def generate_reply(
             query=query_text, user_id=user_id_str, n_results=3
         )
     except Exception as exc:
-        logger.warning("Similar replies search failed: %s", exc)
+        logger.warning("Similar-replies søgning fejlede: %s", exc)
         similar_replies = []
 
-    # 3: Fetch matching templates from the database
     from app.models.template import Template
 
     templates: list[Template] = []
@@ -226,9 +234,8 @@ async def generate_reply(
         result = await db.execute(stmt)
         templates = list(result.scalars().all())
     except Exception as exc:
-        logger.warning("Template fetch failed: %s", exc)
+        logger.warning("Skabelon-hentning fejlede: %s", exc)
 
-    # 4: Build the prompt
     prompt = await build_reply_prompt(
         email=email,
         user=user,
@@ -237,11 +244,20 @@ async def generate_reply(
         templates=templates,
     )
 
-    # 5: Generate the reply
     try:
-        reply_text = await _call_ollama_generate(prompt)
-    except httpx.HTTPError as exc:
-        logger.error("Ollama API error during reply generation: %s", exc)
-        raise RuntimeError(f"Failed to generate reply: {exc}") from exc
+        reply_text = await _call_claude_async(
+            prompt,
+            model=settings.claude_model,
+            max_tokens=512,
+        )
+    except anthropic.APIError as exc:
+        logger.error("Claude API fejl under svargenerering: %s", exc)
+        raise RuntimeError(f"Kunne ikke generere svar: {exc}") from exc
 
     return reply_text.strip()
+
+
+# Bagudkompatibilitet — bruges af chat.py
+async def _call_ollama_generate(prompt: str) -> str:
+    """Alias til _call_claude_async for bagudkompatibilitet med chat.py."""
+    return await _call_claude_async(prompt, max_tokens=1024)
