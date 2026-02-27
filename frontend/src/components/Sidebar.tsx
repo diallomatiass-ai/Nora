@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
-import { Inbox, LayoutDashboard, FileText, BookOpen, Settings, Sun, Moon, Phone, Users, Calendar } from 'lucide-react'
+import { Inbox, LayoutDashboard, FileText, BookOpen, Settings, Sun, Moon, Phone, Users, Calendar, ShieldCheck } from 'lucide-react'
 import { useTranslation } from '@/lib/i18n'
 import { api } from '@/lib/api'
 
@@ -15,10 +15,23 @@ interface BadgeCounts {
   todayEvents: number
 }
 
+interface CurrentUser {
+  id: string
+  role: string
+  name: string
+  email: string
+}
+
 export default function Sidebar() {
   const pathname = usePathname()
   const { t, theme, setTheme } = useTranslation()
   const [badges, setBadges] = useState<BadgeCounts>({ unread: 0, newCalls: 0, overdueTasks: 0, todayEvents: 0 })
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null)
+
+  useEffect(() => {
+    // Hent brugerinfo (til admin-check)
+    api.getMe().then((u: CurrentUser) => setCurrentUser(u)).catch(() => null)
+  }, [])
 
   useEffect(() => {
     // Hent badge counts
@@ -50,6 +63,9 @@ export default function Sidebar() {
     { href: '/templates', label: t('templates'), icon: FileText, badge: 0 },
     { href: '/knowledge', label: t('knowledgeBase'), icon: BookOpen, badge: 0 },
     { href: '/settings', label: t('settings'), icon: Settings, badge: 0 },
+    ...(currentUser?.role === 'admin'
+      ? [{ href: '/admin', label: 'Admin', icon: ShieldCheck, badge: 0 }]
+      : []),
   ]
 
   // Mobil bottom-nav: kun de 4 vigtigste

@@ -2,7 +2,11 @@ import logging
 from datetime import datetime, timezone, timedelta
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+
+limiter = Limiter(key_func=get_remote_address)
 from pydantic import BaseModel
 from sqlalchemy import select, func, case, or_
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -91,7 +95,9 @@ class AiDraftRequest(BaseModel):
 
 
 @router.post("/compose/ai-draft")
+@limiter.limit("10/minute")
 async def generate_compose_draft(
+    request: Request,
     data: AiDraftRequest,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -524,7 +530,9 @@ async def dashboard_summary(
 
 
 @router.post("/{email_id}/generate-suggestion")
+@limiter.limit("10/minute")
 async def generate_suggestion(
+    request: Request,
     email_id: UUID,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),

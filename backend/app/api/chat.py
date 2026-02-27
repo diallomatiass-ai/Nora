@@ -9,8 +9,12 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+
+limiter = Limiter(key_func=get_remote_address)
 from sqlalchemy import select, delete as sql_delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -260,7 +264,9 @@ def _filter_emails(filters: dict, emails: list) -> list:
 # ---------------------------------------------------------------------------
 
 @router.post("", response_model=CommandResponse)
+@limiter.limit("10/minute")
 async def command(
+    request: Request,
     req: CommandRequest,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),

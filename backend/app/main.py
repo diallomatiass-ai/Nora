@@ -1,7 +1,12 @@
+import os
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 from sqlalchemy import text
 
 from app.config import settings
@@ -21,7 +26,11 @@ from app.api.reminders import router as reminders_router
 from app.api.calendar import router as calendar_router
 from app.api.calendar_webhooks import router as calendar_webhooks_router
 from app.api.booking_rules import router as booking_rules_router
+from app.api.admin import router as admin_router
 import app.models  # noqa: F401 — ensure all models are registered
+
+# Rate limiter — 10 forespørgsler pr. minut pr. IP på chat + emails
+limiter = Limiter(key_func=get_remote_address, default_limits=["200/minute"])
 
 
 async def ensure_columns(engine):
@@ -58,9 +67,12 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost", "http://localhost:3000", os.getenv("FRONTEND_URL", "http://localhost")],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -81,6 +93,7 @@ app.include_router(reminders_router, prefix="/api/reminders", tags=["reminders"]
 app.include_router(calendar_router, prefix="/api/calendar", tags=["calendar"])
 app.include_router(calendar_webhooks_router, prefix="/api/calendar/oauth", tags=["calendar-oauth"])
 app.include_router(booking_rules_router, prefix="/api/booking-rules", tags=["booking-rules"])
+app.include_router(admin_router, prefix="/api/admin", tags=["admin"])
 
 
 @app.get("/api/health")

@@ -1,4 +1,10 @@
+import logging
+import warnings
+
+from pydantic import field_validator
 from pydantic_settings import BaseSettings
+
+logger = logging.getLogger(__name__)
 
 
 class Settings(BaseSettings):
@@ -54,6 +60,13 @@ class Settings(BaseSettings):
     twilio_account_sid: str = ""
     twilio_auth_token: str = ""
     twilio_phone_number: str = ""
+
+    @field_validator("secret_key")
+    @classmethod
+    def warn_weak_secret(cls, v):
+        if v in ("changeme", "secret", "password", ""):
+            warnings.warn("SIKKERHEDSADVARSEL: secret_key er usikker! Sæt en stærk SECRET_KEY i .env")
+        return v
 
     model_config = {"env_file": ".env", "extra": "ignore"}
 

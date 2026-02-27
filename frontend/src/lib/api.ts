@@ -273,6 +273,16 @@ export const api = {
   deleteCalendarAccount: (id: string) =>
     fetchApi(`/calendar/oauth/accounts/${id}`, { method: 'DELETE' }),
 
+  // Admin
+  getAdminStats: () => fetchApi('/admin/stats'),
+  getAdminUsers: () => fetchApi('/admin/users'),
+  updateUserRole: (userId: string, role: string) =>
+    fetchApi(`/admin/users/${userId}/role`, { method: 'PUT', body: JSON.stringify({ role }) }),
+  deleteAdminUser: (userId: string) =>
+    fetchApi(`/admin/users/${userId}`, { method: 'DELETE' }),
+  getAdminRecentEmails: () => fetchApi('/admin/emails/recent'),
+  getAdminHealth: () => fetchApi('/admin/health'),
+
   // Booking rules
   getBookingRules: () => fetchApi('/booking-rules'),
   updateBookingRules: (data: {
