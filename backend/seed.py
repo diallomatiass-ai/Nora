@@ -20,6 +20,7 @@ from app.models.customer import Customer
 from app.models.action_item import ActionItem
 from app.models.email_reminder import EmailReminder
 from app.models.calendar_event import CalendarEvent
+from app.models.calendar_account import CalendarAccount
 from app.utils.auth import hash_password
 
 
@@ -381,6 +382,41 @@ async def seed():
             db.add(ce)
         await db.flush()
         print(f"Kalenderbegivenheder: {len(cal_events)} stk")
+
+        # ─────────────────────────────────────────────
+        # KALENDER-KONTO (demo — viser forbundet Google Kalender)
+        # ─────────────────────────────────────────────
+        cal_account = CalendarAccount(
+            id=uuid.uuid4(),
+            user_id=user.id,
+            provider="google",
+            calendar_email="martin@jensens-vvs.dk",
+            encrypted_access_token="demo_token_not_real",
+            encrypted_refresh_token="demo_refresh_not_real",
+            token_expires_at=now + timedelta(days=30),
+            is_active=True,
+        )
+        db.add(cal_account)
+        await db.flush()
+        print(f"Kalender-konto: {cal_account.calendar_email} ({cal_account.provider})")
+
+        # ─────────────────────────────────────────────
+        # BOOKING-REGLER på AI Sekretær
+        # ─────────────────────────────────────────────
+        secretary.booking_rules = {
+            "enabled": True,
+            "work_days": [1, 2, 3, 4, 5],
+            "work_hours": {"start": "07:00", "end": "16:00"},
+            "slot_duration_minutes": 60,
+            "buffer_minutes": 15,
+            "max_bookings_per_day": 6,
+            "advance_booking_days": 21,
+            "min_notice_hours": 2,
+            "blocked_dates": [],
+            "custom_slots": {},
+        }
+        await db.flush()
+        print("Booking-regler opdateret på AI Sekretær")
 
         # ─────────────────────────────────────────────
         # EMAIL PÅMINDELSER (3 stk)
