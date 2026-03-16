@@ -89,6 +89,12 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ prompt, current_text: currentText }),
     }),
+  bulkActionSuggestions: (action: 'approve' | 'reject', suggestionIds: string[]) =>
+    fetchApi('/suggestions/bulk-action', {
+      method: 'POST',
+      body: JSON.stringify({ action, suggestion_ids: suggestionIds }),
+    }),
+  listPendingSuggestions: () => fetchApi('/suggestions/?status=pending&limit=50'),
 
   // Templates
   listTemplates: () => fetchApi('/templates/'),
@@ -313,4 +319,20 @@ export const api = {
     fetchApi('/billing/checkout', { method: 'POST', body: JSON.stringify({ plan }) }),
   createPortal: () =>
     fetchApi('/billing/portal', { method: 'POST' }),
+
+  // Mødenotater
+  listMeetings: () => fetchApi('/meetings'),
+  createMeeting: (data: { title?: string; transcript?: string; participants?: string; meeting_date?: string }) =>
+    fetchApi('/meetings', { method: 'POST', body: JSON.stringify(data) }),
+  getMeeting: (id: string) => fetchApi(`/meetings/${id}`),
+  updateMeeting: (id: string, data: Record<string, unknown>) =>
+    fetchApi(`/meetings/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteMeeting: (id: string) =>
+    fetchApi(`/meetings/${id}`, { method: 'DELETE' }),
+  processMeeting: (id: string) =>
+    fetchApi(`/meetings/${id}/process`, { method: 'POST' }),
+
+  // Generisk request (bruges af møde-siden)
+  request: (method: string, path: string, body?: unknown) =>
+    fetchApi(path, { method, ...(body ? { body: JSON.stringify(body) } : {}) }),
 };

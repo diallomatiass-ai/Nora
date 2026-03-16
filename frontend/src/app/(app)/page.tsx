@@ -19,6 +19,12 @@ interface TopEmail {
   received_at: string | null
 }
 
+interface OnboardingStep {
+  id: string
+  label: string
+  done: boolean
+}
+
 interface DashboardData {
   user_name: string
   unread: number
@@ -26,6 +32,10 @@ interface DashboardData {
   pending_suggestions: number
   week_total: number
   top_urgent: TopEmail[]
+  onboarding?: {
+    completed: boolean
+    steps: OnboardingStep[]
+  }
 }
 
 interface RecentCall {
@@ -168,6 +178,29 @@ export default function Dashboard() {
         <StatBox label={t('newItems')} value={newCount} color="text-[#162249] dark:text-[#42D1B9]" bg="bg-[#42D1B9]/10" borderColor="border-[#42D1B9]/20" />
         <StatBox label={t('tasks')} value={openTasks} color="text-amber-700 dark:text-amber-400" bg="bg-amber-50 dark:bg-amber-500/10" borderColor="border-amber-200 dark:border-amber-500/20" />
       </div>
+
+      {/* Onboarding-checklist (kun når ikke færdig) */}
+      {dash?.onboarding && !dash.onboarding.completed && (
+        <section className="card p-4 border-l-4 border-l-[#42D1B9]">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-bold text-[var(--text-primary)] flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 text-[#42D1B9]" />
+              Kom godt i gang
+            </h2>
+            <span className="text-xs text-[var(--text-muted)]">
+              {dash.onboarding.steps.filter(s => s.done).length}/{dash.onboarding.steps.length} gennemført
+            </span>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            {dash.onboarding.steps.map(step => (
+              <div key={step.id} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm ${step.done ? 'bg-[#42D1B9]/10 text-[#42D1B9]' : 'bg-[var(--surface-hover)] text-[var(--text-muted)]'}`}>
+                <CheckCircle className={`w-4 h-4 flex-shrink-0 ${step.done ? 'text-[#42D1B9]' : 'text-[var(--border)]'}`} />
+                <span className="truncate">{step.label}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* 3 Kolonner + hover preview */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

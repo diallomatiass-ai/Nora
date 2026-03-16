@@ -9,7 +9,7 @@ import AiSuggestionCard from '@/components/AiSuggestionCard'
 import ConversationPanel from '@/components/ConversationPanel'
 import ComposeEmail from '@/components/ComposeEmail'
 import { useTranslation } from '@/lib/i18n'
-import { Sparkles, Loader2, X, AlertTriangle, Search, PenSquare, Bell, Send } from 'lucide-react'
+import { Sparkles, Loader2, X, AlertTriangle, Search, PenSquare, Bell, Send, CheckCheck } from 'lucide-react'
 
 const categories = ['inquiry', 'complaint', 'order', 'support', 'spam', 'other']
 const urgencies = ['high', 'medium', 'low']
@@ -43,6 +43,10 @@ export default function InboxPage() {
   // Reminders
   const [reminders, setReminders] = useState<any[]>([])
   const [remindersOpen, setRemindersOpen] = useState(true)
+
+  // Bulk godkend
+  const [bulkLoading, setBulkLoading] = useState(false)
+  const [pendingCount, setPendingCount] = useState(0)
 
   const categoryLabels: Record<string, string> = {
     inquiry: t('inquiry'), complaint: t('complaint'), order: t('order'),
@@ -94,6 +98,30 @@ export default function InboxPage() {
   }, [activeCategory, activeUrgency, debouncedSearch, view])
 
   useEffect(() => { fetchReminders() }, [])
+
+  // Hent antal afventende forslag
+  const fetchPendingCount = useCallback(async () => {
+    try {
+      const data = await api.listPendingSuggestions() as any[]
+      setPendingCount(data?.length ?? 0)
+    } catch { setPendingCount(0) }
+  }, [])
+
+  useEffect(() => { fetchPendingCount() }, [emails, fetchPendingCount])
+
+  const handleBulkApprove = async () => {
+    setBulkLoading(true)
+    try {
+      const pending = await api.listPendingSuggestions() as any[]
+      if (!pending?.length) return
+      const ids = pending.map((s: any) => s.id)
+      await api.bulkActionSuggestions('approve', ids)
+      setPendingCount(0)
+      if (selectedId) await fetchDetail(selectedId)
+      await fetchEmails()
+    } catch (err) { console.error(err) }
+    finally { setBulkLoading(false) }
+  }
 
   // WebSocket: auto-refresh indbakken når ny email modtages
   useWebSocket((event) => {
@@ -192,6 +220,16 @@ export default function InboxPage() {
               className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--text-primary)] focus:ring-2 focus:ring-[#42D1B9] focus:border-transparent placeholder:text-[var(--text-muted)]"
             />
           </div>
+          {pendingCount > 0 && view === 'inbox' && (
+            <button
+              onClick={handleBulkApprove}
+              disabled={bulkLoading}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-[#42D1B9]/15 hover:bg-[#42D1B9]/25 text-[#162249] dark:text-[#42D1B9] border border-[#42D1B9]/30 transition-colors disabled:opacity-50"
+            >
+              {bulkLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCheck className="w-3.5 h-3.5" />}
+              Godkend alle ({pendingCount})
+            </button>
+          )}
           <button
             onClick={() => setComposeOpen(true)}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-[#162249] hover:bg-[#1e2d6b] text-white transition-colors ml-auto"

@@ -46,6 +46,29 @@ class BulkActionResponse(BaseModel):
     details: list[dict]
 
 
+@router.get("/")
+async def list_suggestions(
+    status: str | None = None,
+    limit: int = 50,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """List suggestions for current user, optionally filtered by status."""
+    from sqlalchemy.orm import selectinload
+    stmt = (
+        select(AiSuggestion)
+        .join(EmailMessage, AiSuggestion.email_id == EmailMessage.id)
+        .join(MailAccount, EmailMessage.account_id == MailAccount.id)
+        .where(MailAccount.user_id == user.id)
+    )
+    if status:
+        stmt = stmt.where(AiSuggestion.status == status)
+    stmt = stmt.limit(limit).order_by(AiSuggestion.created_at.desc())
+    result = await db.execute(stmt)
+    suggestions = result.scalars().all()
+    return [{"id": str(s.id), "status": s.status, "email_id": str(s.email_id)} for s in suggestions]
+
+
 @router.post("/bulk-action", response_model=BulkActionResponse)
 async def bulk_suggestion_action(
     data: BulkActionRequest,
@@ -119,6 +142,21 @@ async def handle_suggestion_action(
         from app.services.learning import log_feedback
         final_text = suggestion.edited_text or suggestion.suggested_text
         await log_feedback(suggestion, final_text, db)
+
+        # Gem skrivestils-eksempel til fremtidige AI-forslag
+        try:
+            from app.services.vector_store import add_style_sample
+            from app.models.email_message import EmailMessage as EmailMsg
+            email_res = await db.execute(select(EmailMsg).where(EmailMsg.id == suggestion.email_id))
+            email_obj = email_res.scalar_one_or_none()
+            metadata: dict = {
+                "user_id": str(user.id),
+                "category": email_obj.category or "andet" if email_obj else "andet",
+                "status": suggestion.status,
+            }
+            await add_style_sample(str(suggestion.id), final_text, metadata)
+        except Exception:
+            pass  # Skrivestils-læring er best-effort
 
     return suggestion
 
