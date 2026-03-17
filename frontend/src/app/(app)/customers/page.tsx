@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { api } from '@/lib/api'
 import { useTranslation } from '@/lib/i18n'
-import { Users, Plus, Search, X, ChevronRight, Phone, Mail, Tag, TrendingUp } from 'lucide-react'
+import { Users, Plus, Search, X, ChevronRight, Phone, Mail, TrendingUp } from 'lucide-react'
 
 interface Customer {
   id: string
@@ -13,7 +13,6 @@ interface Customer {
   phone: string | null
   status: string
   estimated_value: number | null
-  tags: string[]
   source: string | null
   address_city: string | null
   created_at: string
@@ -243,14 +242,6 @@ export default function CustomersPage() {
                     <span className="text-xs text-[var(--text-muted)]">{c.address_city}</span>
                   )}
                 </div>
-                {c.tags && c.tags.length > 0 && (
-                  <div className="flex items-center gap-1 mt-1">
-                    <Tag className="w-3 h-3 text-[var(--text-muted)]" />
-                    {c.tags.map(tag => (
-                      <span key={tag} className="px-1.5 py-0.5 rounded bg-[var(--surface-hover)] text-[10px] text-[var(--text-muted)]">{tag}</span>
-                    ))}
-                  </div>
-                )}
               </div>
               <div className="flex items-center gap-3 flex-shrink-0">
                 {c.estimated_value ? (

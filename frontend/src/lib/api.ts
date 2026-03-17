@@ -151,12 +151,7 @@ export const api = {
   deleteCustomer: (id: string) =>
     fetchApi(`/customers/${id}`, { method: 'DELETE' }),
   getCustomerTimeline: (id: string) => fetchApi(`/customers/${id}/timeline`),
-  mergeCustomers: (primaryId: string, secondaryId: string) =>
-    fetchApi(`/customers/${primaryId}/merge/${secondaryId}`, { method: 'POST' }),
   getCustomerDashboard: () => fetchApi('/customers/dashboard'),
-  pushToOrdrestyring: (customerId: string, data?: { description?: string }) =>
-    fetchApi(`/customers/${customerId}/push-ordrestyring`, { method: 'POST', body: JSON.stringify(data || {}) }),
-  getOrdrestyringStatus: () => fetchApi('/customers/ordrestyring-status'),
 
   // Action Items
   listActionItems: (params?: { status?: string; customer_id?: string; overdue?: boolean }) => {
