@@ -206,46 +206,6 @@ const translations = {
     themeDay: 'Dag',
     themeNight: 'Nat',
 
-    // Calendar integration
-    calendarIntegration: 'Kalender-integration',
-    calendarIntegrationDesc: 'Forbind din kalender så Nora kan booke aftaler direkte.',
-    connectGoogleCalendar: 'Forbind Google Kalender',
-    connectOutlookCalendar: 'Forbind Outlook Kalender',
-    calendarConnected: 'Forbundet',
-    calendarNotConnected: 'Ingen kalender tilsluttet',
-    calendarNotConnectedDesc: 'Forbind en kalender for at aktivere automatisk booking via Nora.',
-    disconnectCalendar: 'Fjern denne kalenderkonto?',
-    calendarProvider: 'Udbyder',
-
-    // Booking rules
-    bookingSettings: 'Booking-indstillinger',
-    bookingSettingsDesc: 'Konfigurer hvordan Nora booker aftaler i din kalender.',
-    bookingEnabled: 'Aktivér automatisk booking',
-    bookingEnabledDesc: 'Lad Nora booke aftaler direkte i din kalender under opkald.',
-    workDays: 'Arbejdsdage',
-    workHours: 'Arbejdstider',
-    workHoursStart: 'Fra',
-    workHoursEnd: 'Til',
-    slotDuration: 'Aftalelængde (min)',
-    bufferMinutes: 'Buffer mellem aftaler (min)',
-    maxBookingsPerDay: 'Maks bookinger per dag',
-    advanceBookingDays: 'Booking-horisont (dage frem)',
-    minNoticeHours: 'Minimum varsel (timer)',
-    blockedDates: 'Blokerede datoer',
-    blockedDatesDesc: 'Dage hvor der ikke kan bookes (ferie, kurser osv.)',
-    addBlockedDate: 'Tilføj dato',
-    noBlockedDates: 'Ingen blokerede datoer',
-    previewAvailability: 'Forhåndsvis ledige tider',
-    previewAvailabilityDesc: 'Se ledige tider de næste 7 dage.',
-    noAvailableSlots: 'Ingen ledige tider i perioden',
-    monday: 'Mandag',
-    tuesday: 'Tirsdag',
-    wednesday: 'Onsdag',
-    thursday: 'Torsdag',
-    friday: 'Fredag',
-    saturday: 'Lørdag',
-    sunday: 'Søndag',
-    calendarRequired: 'Tilslut en kalender under Indstillinger for at aktivere booking.',
   },
   en: {
     // App
@@ -447,46 +407,6 @@ const translations = {
     themeDay: 'Day',
     themeNight: 'Night',
 
-    // Calendar integration
-    calendarIntegration: 'Calendar integration',
-    calendarIntegrationDesc: 'Connect your calendar so Nora can book appointments directly.',
-    connectGoogleCalendar: 'Connect Google Calendar',
-    connectOutlookCalendar: 'Connect Outlook Calendar',
-    calendarConnected: 'Connected',
-    calendarNotConnected: 'No calendar connected',
-    calendarNotConnectedDesc: 'Connect a calendar to enable automatic booking via Nora.',
-    disconnectCalendar: 'Remove this calendar account?',
-    calendarProvider: 'Provider',
-
-    // Booking rules
-    bookingSettings: 'Booking settings',
-    bookingSettingsDesc: 'Configure how Nora books appointments in your calendar.',
-    bookingEnabled: 'Enable automatic booking',
-    bookingEnabledDesc: 'Let Nora book appointments directly in your calendar.',
-    workDays: 'Work days',
-    workHours: 'Work hours',
-    workHoursStart: 'From',
-    workHoursEnd: 'To',
-    slotDuration: 'Appointment length (min)',
-    bufferMinutes: 'Buffer between appointments (min)',
-    maxBookingsPerDay: 'Max bookings per day',
-    advanceBookingDays: 'Booking horizon (days ahead)',
-    minNoticeHours: 'Minimum notice (hours)',
-    blockedDates: 'Blocked dates',
-    blockedDatesDesc: 'Days that cannot be booked (holidays, courses, etc.)',
-    addBlockedDate: 'Add date',
-    noBlockedDates: 'No blocked dates',
-    previewAvailability: 'Preview available times',
-    previewAvailabilityDesc: 'See available times for the next 7 days.',
-    noAvailableSlots: 'No available times in this period',
-    monday: 'Monday',
-    tuesday: 'Tuesday',
-    wednesday: 'Wednesday',
-    thursday: 'Thursday',
-    friday: 'Friday',
-    saturday: 'Saturday',
-    sunday: 'Sunday',
-    calendarRequired: 'Connect a calendar in Settings to enable booking.',
   },
 } as const
 
@@ -513,11 +433,11 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>('light')
 
   useEffect(() => {
-    const savedLocale = localStorage.getItem('ahmes-locale') as Locale | null
+    const savedLocale = localStorage.getItem('nora-locale') as Locale | null
     if (savedLocale && (savedLocale === 'da' || savedLocale === 'en')) {
       setLocaleState(savedLocale)
     }
-    const savedTheme = localStorage.getItem('ahmes-theme') as Theme | null
+    const savedTheme = localStorage.getItem('nora-theme') as Theme | null
     if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) {
       setThemeState(savedTheme)
       document.documentElement.classList.toggle('dark', savedTheme === 'dark')
@@ -528,12 +448,12 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
   const setLocale = (newLocale: Locale) => {
     setLocaleState(newLocale)
-    localStorage.setItem('ahmes-locale', newLocale)
+    localStorage.setItem('nora-locale', newLocale)
   }
 
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme)
-    localStorage.setItem('ahmes-theme', newTheme)
+    localStorage.setItem('nora-theme', newTheme)
     document.documentElement.classList.toggle('dark', newTheme === 'dark')
   }
 

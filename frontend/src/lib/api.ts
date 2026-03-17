@@ -179,46 +179,12 @@ export const api = {
   generateFollowupDraft: (id: string) =>
     fetchApi(`/action-items/${id}/generate-draft`, { method: 'POST' }),
 
-  // Kalender
-  getCalendarStatus: () => fetchApi('/calendar/status'),
-  getCalendarEvents: (start?: string, end?: string) => {
-    const params = new URLSearchParams()
-    if (start) params.set('start', start)
-    if (end) params.set('end', end)
-    const qs = params.toString()
-    return fetchApi(`/calendar/events${qs ? `?${qs}` : ''}`)
-  },
-  createCalendarEvent: (data: {
-    title: string;
-    description?: string;
-    start_time: string;
-    end_time: string;
-    action_item_id?: string;
-    call_id?: string;
-    event_type?: string;
-  }) => fetchApi('/calendar/events', { method: 'POST', body: JSON.stringify(data) }),
-  updateCalendarEvent: (id: string, data: {
-    title?: string;
-    description?: string;
-    start_time?: string;
-    end_time?: string;
-  }) => fetchApi(`/calendar/events/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-  deleteCalendarEvent: (id: string) =>
-    fetchApi(`/calendar/events/${id}`, { method: 'DELETE' }),
-
   // Accounts (email)
   listAccounts: () => fetchApi('/webhooks/accounts'),
   connectGmail: () => fetchApi('/webhooks/gmail/connect'),
   connectOutlook: () => fetchApi('/webhooks/outlook/connect'),
   disconnectAccount: (id: string) =>
     fetchApi(`/webhooks/accounts/${id}`, { method: 'DELETE' }),
-
-  // Calendar accounts (OAuth)
-  connectGoogleCalendar: () => fetchApi('/calendar/oauth/google/connect'),
-  connectOutlookCalendar: () => fetchApi('/calendar/oauth/microsoft/connect'),
-  listCalendarAccounts: () => fetchApi('/calendar/oauth/accounts'),
-  deleteCalendarAccount: (id: string) =>
-    fetchApi(`/calendar/oauth/accounts/${id}`, { method: 'DELETE' }),
 
   // Admin
   getAdminStats: () => fetchApi('/admin/stats'),
