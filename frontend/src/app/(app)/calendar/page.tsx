@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Calendar, ChevronLeft, ChevronRight, Plus, X, Phone, ClipboardList, Clock } from 'lucide-react'
+import { Calendar, ChevronLeft, ChevronRight, Plus, X, ClipboardList, Clock } from 'lucide-react'
 import { api } from '@/lib/api'
 
 interface CalendarEvent {
@@ -31,7 +31,7 @@ const EVENT_COLORS: Record<string, string> = {
 
 const EVENT_ICONS: Record<string, typeof ClipboardList> = {
   action_item: ClipboardList,
-  call: Phone,
+  call: Calendar,
   manual: Calendar,
 }
 

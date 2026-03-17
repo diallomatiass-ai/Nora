@@ -4,7 +4,6 @@ Calendar Service — Unified kalenderintegration for Google Calendar og Microsof
 Håndterer:
 - Hent ledige tider (freebusy)
 - Book aftaler (opret event)
-- SMS-bekræftelse via Twilio
 - CRUD sync til Google/Outlook (brugt af calendar.py API)
 """
 
@@ -15,10 +14,8 @@ from datetime import datetime, timezone, timedelta
 import httpx
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from twilio.rest import Client as TwilioClient
 
 from app.config import settings
-from app.models.ai_secretary import AiSecretary
 from app.models.calendar_account import CalendarAccount
 from app.models.mail_account import MailAccount
 from app.models.calendar_event import CalendarEvent
@@ -87,12 +84,8 @@ class CalendarService:
             logger.warning(f"Ingen aktiv kalenderkonto for user {user_id}")
             return []
 
-        # Hent booking rules
-        result = await db.execute(
-            select(AiSecretary).where(AiSecretary.user_id == user_id)
-        )
-        secretary = result.scalar_one_or_none()
-        rules = {**DEFAULT_BOOKING_RULES, **(secretary.booking_rules or {})} if secretary else DEFAULT_BOOKING_RULES
+        # Brug default booking rules
+        rules = DEFAULT_BOOKING_RULES
 
         # Hent gyldig token
         try:
@@ -176,21 +169,6 @@ class CalendarService:
         except Exception as e:
             logger.error(f"Kunne ikke oprette kalender-event: {e}")
             return BookingResult(success=False, event_id=None, message="Kunne ikke oprette aftale i kalenderen")
-
-        # Hent firmanavn til SMS
-        result = await db.execute(select(AiSecretary).where(AiSecretary.user_id == user_id))
-        secretary = result.scalar_one_or_none()
-        business_name = secretary.business_name if secretary else "firmaet"
-
-        # Send SMS-bekræftelser
-        await self._send_booking_sms(
-            customer_phone=customer_phone,
-            customer_name=customer_name,
-            business_name=business_name,
-            owner_phone=self._get_owner_phone(secretary),
-            date_str=slot.date,
-            time_str=slot.start_time,
-        )
 
         return BookingResult(
             success=True,
@@ -435,58 +413,6 @@ class CalendarService:
 
         return slots
 
-    @staticmethod
-    def _get_owner_phone(secretary: AiSecretary | None) -> str:
-        if not secretary:
-            return ""
-        contacts = secretary.contact_persons or []
-        if contacts:
-            return contacts[0].get("phone", "")
-        return ""
-
-    async def _send_booking_sms(
-        self,
-        customer_phone: str,
-        customer_name: str,
-        business_name: str,
-        owner_phone: str,
-        date_str: str,
-        time_str: str,
-    ):
-        """Send SMS-bekræftelse til kunde og håndværker."""
-        if not settings.twilio_account_sid or not settings.twilio_auth_token:
-            logger.warning("Twilio ikke konfigureret — SMS-bekræftelse springes over")
-            return
-
-        try:
-            client = TwilioClient(settings.twilio_account_sid, settings.twilio_auth_token)
-            from_number = settings.twilio_phone_number
-
-            if customer_phone:
-                client.messages.create(
-                    body=(
-                        f"Din aftale med {business_name} er bekræftet: "
-                        f"{date_str} kl. {time_str}. "
-                        f"Vi glæder os til at hjælpe dig!"
-                    ),
-                    from_=from_number,
-                    to=customer_phone,
-                )
-                logger.info(f"Booking SMS sendt til kunde: {customer_phone}")
-
-            if owner_phone:
-                client.messages.create(
-                    body=(
-                        f"Ny aftale booket: {customer_name} ({customer_phone}), "
-                        f"{date_str} kl. {time_str}."
-                    ),
-                    from_=from_number,
-                    to=owner_phone,
-                )
-                logger.info(f"Booking SMS sendt til ejer: {owner_phone}")
-
-        except Exception as e:
-            logger.error(f"SMS-bekræftelse fejlede: {e}")
 
 
 # ══════════════════════════════════════════════════════════════════════════

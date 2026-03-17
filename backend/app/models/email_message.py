@@ -35,9 +35,5 @@ class EmailMessage(Base):
     is_outgoing: Mapped[bool] = mapped_column(default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
-    # Customer link
-    customer_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("customers.id"))
-
     account = relationship("MailAccount", back_populates="emails")
     suggestions = relationship("AiSuggestion", back_populates="email", cascade="all, delete-orphan")
-    customer = relationship("Customer", back_populates="emails")

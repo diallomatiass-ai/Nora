@@ -247,13 +247,6 @@ async def compose_email(
     )
     db.add(email_msg)
 
-    # Auto-link to customer
-    from app.services.customer_matching import find_or_create_from_email
-    customer = await find_or_create_from_email(
-        data.to_address, None, user.id, db,
-    )
-    email_msg.customer_id = customer.id
-
     await db.commit()
     await db.refresh(email_msg)
     return {"id": str(email_msg.id), "status": "sent"}
@@ -359,45 +352,6 @@ async def get_email_thread(
         response.append(item)
     return response
 
-
-@router.get("/{email_id}/customer-history", response_model=list[EmailListResponse])
-async def get_email_customer_history(
-    email_id: UUID,
-    user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    """Get recent emails from same customer (excluding current)."""
-    account_ids = await _get_account_ids(user, db)
-
-    result = await db.execute(
-        select(EmailMessage).where(
-            EmailMessage.id == email_id,
-            EmailMessage.account_id.in_(account_ids),
-        )
-    )
-    email = result.scalar_one_or_none()
-    if not email or not email.customer_id:
-        return []
-
-    result = await db.execute(
-        select(EmailMessage)
-        .options(selectinload(EmailMessage.suggestions))
-        .where(
-            EmailMessage.customer_id == email.customer_id,
-            EmailMessage.account_id.in_(account_ids),
-            EmailMessage.id != email_id,
-        )
-        .order_by(EmailMessage.received_at.desc())
-        .limit(20)
-    )
-    emails = result.scalars().unique().all()
-
-    response = []
-    for e in emails:
-        item = EmailListResponse.model_validate(e)
-        item.has_suggestion = len(e.suggestions) > 0
-        response.append(item)
-    return response
 
 
 @router.get("/{email_id}", response_model=EmailMessageResponse)
@@ -509,16 +463,12 @@ async def dashboard_summary(
     )
     top_emails = top_result.scalars().all()
 
-    # Onboarding-checklist: tjek hvad brugeren har sat op
+    # Onboarding-checklist
     from app.models.knowledge_base import KnowledgeBase
-    from app.models.ai_secretary import AiSecretary
 
     has_mail_account = len(account_ids) > 0
     has_knowledge = bool((await db.execute(
         select(func.count()).where(KnowledgeBase.user_id == user.id)
-    )).scalar())
-    has_secretary = bool((await db.execute(
-        select(func.count()).where(AiSecretary.user_id == user.id)
     )).scalar())
     has_emails = week_total > 0
     has_subscription = user.plan != "free" if hasattr(user, "plan") else False
@@ -526,11 +476,10 @@ async def dashboard_summary(
     onboarding = {
         "completed": all([has_mail_account, has_knowledge, has_emails]),
         "steps": [
-            {"id": "mail_account", "label": "Forbind mailkonto", "done": has_mail_account},
-            {"id": "knowledge",    "label": "Tilføj videnbase",  "done": has_knowledge},
-            {"id": "first_email",  "label": "Første email modtaget", "done": has_emails},
-            {"id": "secretary",    "label": "Aktiver AI Sekretær", "done": has_secretary},
-            {"id": "subscription", "label": "Opgrader abonnement", "done": has_subscription},
+            {"id": "mail_account", "label": "Forbind mailkonto",      "done": has_mail_account},
+            {"id": "knowledge",    "label": "Tilføj videnbase",        "done": has_knowledge},
+            {"id": "first_email",  "label": "Første email modtaget",   "done": has_emails},
+            {"id": "subscription", "label": "Opgrader abonnement",     "done": has_subscription},
         ],
     }
 

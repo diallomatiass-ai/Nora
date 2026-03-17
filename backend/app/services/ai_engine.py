@@ -13,7 +13,7 @@ from sqlalchemy import select
 
 from app.config import settings
 from app.services.prompt_builder import build_classification_prompt, build_reply_prompt
-from app.services.vector_store import search_knowledge, search_similar_replies
+from app.services.vector_store import search_knowledge, search_similar_replies, search_style_samples
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
@@ -207,6 +207,14 @@ async def generate_reply(
         logger.warning("Similar-replies søgning fejlede: %s", exc)
         similar_replies = []
 
+    try:
+        style_samples = await search_style_samples(
+            query=query_text, user_id=user_id_str, n_results=2
+        )
+    except Exception as exc:
+        logger.warning("Style-samples søgning fejlede: %s", exc)
+        style_samples = []
+
     from app.models.template import Template
 
     templates: list[Template] = []
@@ -226,6 +234,7 @@ async def generate_reply(
         knowledge_context=knowledge_context,
         similar_replies=similar_replies,
         templates=templates,
+        style_samples=style_samples,
     )
 
     try:

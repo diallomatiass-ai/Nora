@@ -1,584 +1,381 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
-import { Search, Plus, Users, TrendingUp, AlertTriangle, X } from 'lucide-react'
-import { useTranslation } from '@/lib/i18n'
 import { api } from '@/lib/api'
+import { useTranslation } from '@/lib/i18n'
+import { Users, Plus, Search, X, ChevronRight, Phone, Mail, Tag, TrendingUp } from 'lucide-react'
 
 interface Customer {
   id: string
   name: string
-  phone: string | null
   email: string | null
+  phone: string | null
   status: string
-  source: string
   estimated_value: number | null
+  tags: string[]
+  source: string | null
+  address_city: string | null
   created_at: string
-  _email_count?: number
-  _call_count?: number
 }
 
 interface CustomerDashboard {
-  total_customers: number
+  total: number
   new_this_week: number
   pipeline_value: number
-  overdue_tasks: number
+  by_status: Record<string, number>
+}
+
+const STATUS_LABELS: Record<string, string> = {
+  ny_henvendelse: 'Ny',
+  kontaktet: 'Kontaktet',
+  tilbud_sendt: 'Tilbud sendt',
+  tilbud_accepteret: 'Accepteret',
+  afsluttet: 'Afsluttet',
+  tilbud_afvist: 'Afvist',
+  arkiveret: 'Arkiveret',
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  ny_henvendelse: 'bg-[#42D1B9]/15 text-[#162249] dark:bg-[#42D1B9]/20 dark:text-[#42D1B9]',
+  ny_henvendelse: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300',
   kontaktet: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300',
-  tilbud_sendt: 'bg-[#162249]/10 text-[#162249] dark:bg-[#42D1B9]/10 dark:text-[#a8bdd6]',
+  tilbud_sendt: 'bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-300',
   tilbud_accepteret: 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-300',
-  afsluttet: 'bg-slate-100 text-slate-500 dark:bg-slate-500/20 dark:text-slate-400',
-  tilbud_afvist: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400',
-  arkiveret: 'bg-slate-100 text-slate-400 dark:bg-slate-500/10 dark:text-slate-500',
+  afsluttet: 'bg-slate-100 text-slate-600 dark:bg-slate-500/20 dark:text-slate-400',
+  tilbud_afvist: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300',
+  arkiveret: 'bg-slate-100 text-slate-500 dark:bg-slate-500/20 dark:text-slate-500',
 }
 
-const STATUS_LABEL_KEYS: Record<string, string> = {
-  ny_henvendelse: 'statusNyHenvendelse',
-  kontaktet: 'statusKontaktet',
-  tilbud_sendt: 'statusTilbudSendt',
-  tilbud_accepteret: 'statusTilbudAccepteret',
-  afsluttet: 'statusAfsluttet',
-  tilbud_afvist: 'statusTilbudAfvist',
-  arkiveret: 'statusArkiveret',
+interface CreateForm {
+  name: string
+  email: string
+  phone: string
+  address_street: string
+  address_zip: string
+  address_city: string
+  notes: string
+  estimated_value: string
 }
 
-const STATUS_OPTIONS = [
-  { value: '', label: 'Alle statuser' },
-  { value: 'ny_henvendelse', label: 'Ny henvendelse' },
-  { value: 'kontaktet', label: 'Kontaktet' },
-  { value: 'tilbud_sendt', label: 'Tilbud sendt' },
-  { value: 'tilbud_accepteret', label: 'Tilbud accepteret' },
-  { value: 'afsluttet', label: 'Afsluttet' },
-  { value: 'tilbud_afvist', label: 'Tilbud afvist' },
-  { value: 'arkiveret', label: 'Arkiveret' },
-]
+const emptyForm: CreateForm = {
+  name: '',
+  email: '',
+  phone: '',
+  address_street: '',
+  address_zip: '',
+  address_city: '',
+  notes: '',
+  estimated_value: '',
+}
 
 export default function CustomersPage() {
   const { t } = useTranslation()
-
   const [customers, setCustomers] = useState<Customer[]>([])
   const [dashboard, setDashboard] = useState<CustomerDashboard | null>(null)
   const [loading, setLoading] = useState(true)
-  const [statsLoading, setStatsLoading] = useState(true)
-
-  // Søg + filter
-  const [searchQuery, setSearchQuery] = useState('')
+  const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
-  const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const [debouncedSearch, setDebouncedSearch] = useState('')
-
-  // Opret ny kunde modal
-  const [showModal, setShowModal] = useState(false)
-  const [newName, setNewName] = useState('')
-  const [newPhone, setNewPhone] = useState('')
-  const [newEmail, setNewEmail] = useState('')
+  const [showCreate, setShowCreate] = useState(false)
+  const [form, setForm] = useState<CreateForm>(emptyForm)
   const [creating, setCreating] = useState(false)
-  const [createError, setCreateError] = useState('')
 
-  // Debounce søgning
-  useEffect(() => {
-    if (searchTimeout.current) clearTimeout(searchTimeout.current)
-    searchTimeout.current = setTimeout(() => {
-      setDebouncedSearch(searchQuery)
-    }, 300)
-    return () => {
-      if (searchTimeout.current) clearTimeout(searchTimeout.current)
-    }
-  }, [searchQuery])
-
-  const loadCustomers = useCallback(async () => {
+  const load = useCallback(async () => {
     setLoading(true)
     try {
-      const params: { search?: string; status?: string } = {}
-      if (debouncedSearch) params.search = debouncedSearch
-      if (statusFilter) params.status = statusFilter
-      const data = await api.listCustomers(params)
-      setCustomers(data || [])
-    } catch (e) {
-      console.error('Failed to load customers:', e)
+      const [list, dash] = await Promise.all([
+        api.listCustomers({ search: search || undefined, status: statusFilter || undefined, limit: 100 }),
+        api.getCustomerDashboard(),
+      ])
+      setCustomers(list)
+      setDashboard(dash)
+    } catch {
+      // silent
     } finally {
       setLoading(false)
     }
-  }, [debouncedSearch, statusFilter])
-
-  const loadDashboard = useCallback(async () => {
-    setStatsLoading(true)
-    try {
-      const data = await api.getCustomerDashboard()
-      setDashboard(data)
-    } catch (e) {
-      console.error('Failed to load customer dashboard:', e)
-    } finally {
-      setStatsLoading(false)
-    }
-  }, [])
+  }, [search, statusFilter])
 
   useEffect(() => {
-    loadCustomers()
-  }, [loadCustomers])
+    const t = setTimeout(load, 300)
+    return () => clearTimeout(t)
+  }, [load])
 
-  useEffect(() => {
-    loadDashboard()
-  }, [loadDashboard])
-
-  const handleCreate = async (e: React.FormEvent) => {
+  async function handleCreate(e: React.FormEvent) {
     e.preventDefault()
-    if (!newName.trim()) {
-      setCreateError('Navn er påkrævet')
-      return
-    }
     setCreating(true)
-    setCreateError('')
     try {
       await api.createCustomer({
-        name: newName.trim(),
-        phone: newPhone.trim() || undefined,
-        email: newEmail.trim() || undefined,
+        name: form.name,
+        email: form.email || undefined,
+        phone: form.phone || undefined,
+        address_street: form.address_street || undefined,
+        address_zip: form.address_zip || undefined,
+        address_city: form.address_city || undefined,
+        notes: form.notes || undefined,
+        estimated_value: form.estimated_value ? parseFloat(form.estimated_value) : undefined,
       })
-      setShowModal(false)
-      setNewName('')
-      setNewPhone('')
-      setNewEmail('')
-      await Promise.all([loadCustomers(), loadDashboard()])
-    } catch (e: any) {
-      setCreateError(e.message || 'Kunne ikke oprette kunde')
+      setForm(emptyForm)
+      setShowCreate(false)
+      load()
+    } catch {
+      // silent
     } finally {
       setCreating(false)
     }
   }
 
-  const closeModal = () => {
-    setShowModal(false)
-    setNewName('')
-    setNewPhone('')
-    setNewEmail('')
-    setCreateError('')
-  }
-
-  const formatDate = (d: string) =>
-    new Date(d).toLocaleDateString('da-DK', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    })
-
-  const formatCurrency = (val: number) =>
-    val.toLocaleString('da-DK') + ' kr'
-
   return (
-    <div className="p-6 max-w-7xl mx-auto animate-fadeIn">
+    <div className="p-4 md:p-6 space-y-5 animate-fadeIn">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-            {t('customers')}
-          </h1>
-          <p className="text-sm mt-0.5" style={{ color: 'var(--text-muted)' }}>
-            Administrer dine kunder og pipeline
-          </p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Users className="w-5 h-5 text-[#42D1B9]" />
+          <h1 className="text-xl font-bold text-[var(--text-primary)]">{t('customers')}</h1>
         </div>
         <button
-          onClick={() => setShowModal(true)}
-          className="btn-primary inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold"
+          onClick={() => setShowCreate(true)}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#42D1B9] hover:bg-[#38C4AD] text-white text-sm font-semibold transition-colors"
         >
           <Plus className="w-4 h-4" />
           {t('newCustomer')}
         </button>
       </div>
 
-      {/* Stats-bar */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        {/* Total kunder */}
-        <div className="card p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-[#42D1B9]/10">
-              <Users className="w-4 h-4 text-[#42D1B9]" />
-            </div>
-            <div>
-              <p className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
-                {t('totalCustomers')}
-              </p>
-              <p className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
-                {statsLoading ? '—' : (dashboard?.total_customers ?? 0)}
-              </p>
-            </div>
+      {/* Stats */}
+      {dashboard && (
+        <div className="grid grid-cols-3 gap-3">
+          <div className="card p-4 text-center">
+            <p className="text-2xl font-bold text-[#162249] dark:text-[#42D1B9]">{dashboard.total}</p>
+            <p className="text-xs text-[var(--text-muted)] mt-1">{t('totalCustomers')}</p>
           </div>
-        </div>
-
-        {/* Nye denne uge */}
-        <div className="card p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-green-100 dark:bg-green-500/20">
-              <Plus className="w-4 h-4 text-green-600 dark:text-green-400" />
-            </div>
-            <div>
-              <p className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
-                {t('newThisWeek')}
-              </p>
-              <p className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
-                {statsLoading ? '—' : (dashboard?.new_this_week ?? 0)}
-              </p>
-            </div>
+          <div className="card p-4 text-center">
+            <p className="text-2xl font-bold text-[#162249] dark:text-[#42D1B9]">{dashboard.new_this_week}</p>
+            <p className="text-xs text-[var(--text-muted)] mt-1">{t('newThisWeek')}</p>
           </div>
-        </div>
-
-        {/* Pipeline-værdi */}
-        <div className="card p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-[#162249]/10 dark:bg-[#42D1B9]/10">
-              <TrendingUp className="w-4 h-4 text-[#162249] dark:text-[#42D1B9]" />
-            </div>
-            <div>
-              <p className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
-                {t('pipelineValue')}
-              </p>
-              <p className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
-                {statsLoading
-                  ? '—'
-                  : dashboard?.pipeline_value
-                  ? formatCurrency(dashboard.pipeline_value)
-                  : '0 kr'}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Forfaldne opgaver */}
-        <div className="card p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-red-100 dark:bg-red-500/20">
-              <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400" />
-            </div>
-            <div>
-              <p className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
-                {t('overdueTasks')}
-              </p>
-              <p className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
-                {statsLoading ? '—' : (dashboard?.overdue_tasks ?? 0)}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Søg + filter */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-5">
-        <div className="relative flex-1 max-w-sm">
-          <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
-            style={{ color: 'var(--text-muted)' }}
-          />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Søg navn, telefon eller email..."
-            className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border"
-            style={{
-              borderColor: 'var(--border)',
-              backgroundColor: 'var(--surface)',
-              color: 'var(--text-primary)',
-            }}
-          />
-        </div>
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-3 py-2 text-sm rounded-lg border"
-          style={{
-            borderColor: 'var(--border)',
-            backgroundColor: 'var(--surface)',
-            color: 'var(--text-primary)',
-          }}
-        >
-          {STATUS_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Kundeliste */}
-      {loading ? (
-        <div
-          className="text-center py-16 text-sm"
-          style={{ color: 'var(--text-muted)' }}
-        >
-          {t('loading')}
-        </div>
-      ) : customers.length === 0 ? (
-        <div className="card p-12 text-center">
-          <Users
-            className="w-12 h-12 mx-auto mb-3 opacity-30"
-            style={{ color: 'var(--text-muted)' }}
-          />
-          <p className="text-sm font-medium" style={{ color: 'var(--text-muted)' }}>
-            {debouncedSearch || statusFilter
-              ? 'Ingen kunder matcher dine filtre'
-              : t('noCustomers')}
-          </p>
-          {!debouncedSearch && !statusFilter && (
-            <button
-              onClick={() => setShowModal(true)}
-              className="mt-4 text-sm text-[#42D1B9] hover:text-[#56DEC8] hover:underline"
-            >
-              Opret din første kunde
-            </button>
-          )}
-        </div>
-      ) : (
-        <div className="card overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr
-                  className="border-b text-xs font-semibold uppercase tracking-wider"
-                  style={{
-                    borderColor: 'var(--border)',
-                    color: 'var(--text-muted)',
-                    backgroundColor: 'var(--surface)',
-                  }}
-                >
-                  <th className="px-4 py-3 text-left">Navn</th>
-                  <th className="px-4 py-3 text-left">Telefon</th>
-                  <th className="px-4 py-3 text-left">Email</th>
-                  <th className="px-4 py-3 text-left">Status</th>
-                  <th className="px-4 py-3 text-center">Emails</th>
-                  <th className="px-4 py-3 text-center">Opkald</th>
-                  <th className="px-4 py-3 text-left">Oprettet</th>
-                  <th className="px-4 py-3 text-right" />
-                </tr>
-              </thead>
-              <tbody className="divide-y" style={{ borderColor: 'var(--border)' }}>
-                {customers.map((customer) => (
-                  <tr
-                    key={customer.id}
-                    className="transition-colors"
-                    style={{ color: 'var(--text-primary)' }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.backgroundColor = 'var(--surface-hover)')
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.backgroundColor = '')
-                    }
-                  >
-                    {/* Navn */}
-                    <td className="px-4 py-3">
-                      <span className="font-medium">{customer.name}</span>
-                      {customer.estimated_value ? (
-                        <p
-                          className="text-xs mt-0.5"
-                          style={{ color: 'var(--text-muted)' }}
-                        >
-                          {formatCurrency(customer.estimated_value)}
-                        </p>
-                      ) : null}
-                    </td>
-
-                    {/* Telefon */}
-                    <td className="px-4 py-3">
-                      {customer.phone ? (
-                        <a
-                          href={`tel:${customer.phone}`}
-                          className="text-[#42D1B9] hover:text-[#56DEC8] hover:underline"
-                        >
-                          {customer.phone}
-                        </a>
-                      ) : (
-                        <span style={{ color: 'var(--text-muted)' }}>—</span>
-                      )}
-                    </td>
-
-                    {/* Email */}
-                    <td className="px-4 py-3">
-                      {customer.email ? (
-                        <a
-                          href={`mailto:${customer.email}`}
-                          className="text-[#42D1B9] hover:text-[#56DEC8] hover:underline truncate max-w-[180px] block"
-                        >
-                          {customer.email}
-                        </a>
-                      ) : (
-                        <span style={{ color: 'var(--text-muted)' }}>—</span>
-                      )}
-                    </td>
-
-                    {/* Status badge */}
-                    <td className="px-4 py-3">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-                          STATUS_COLORS[customer.status] ||
-                          'bg-slate-100 text-slate-500 dark:bg-slate-500/20 dark:text-slate-400'
-                        }`}
-                      >
-                        {t(
-                          (STATUS_LABEL_KEYS[customer.status] as any) ||
-                            customer.status
-                        )}
-                      </span>
-                    </td>
-
-                    {/* Emails */}
-                    <td
-                      className="px-4 py-3 text-center"
-                      style={{ color: 'var(--text-secondary)' }}
-                    >
-                      {customer._email_count ?? 0}
-                    </td>
-
-                    {/* Opkald */}
-                    <td
-                      className="px-4 py-3 text-center"
-                      style={{ color: 'var(--text-secondary)' }}
-                    >
-                      {customer._call_count ?? 0}
-                    </td>
-
-                    {/* Oprettet */}
-                    <td
-                      className="px-4 py-3 text-xs"
-                      style={{ color: 'var(--text-muted)' }}
-                    >
-                      {formatDate(customer.created_at)}
-                    </td>
-
-                    {/* Link */}
-                    <td className="px-4 py-3 text-right">
-                      <Link
-                        href={`/customers/${customer.id}`}
-                        className="text-xs font-medium text-[#42D1B9] hover:text-[#56DEC8] hover:underline whitespace-nowrap"
-                      >
-                        Se detaljer →
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="card p-4 text-center">
+            <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+              {dashboard.pipeline_value ? `${(dashboard.pipeline_value / 1000).toFixed(0)}k` : '0'}
+            </p>
+            <p className="text-xs text-[var(--text-muted)] mt-1">{t('pipelineValue')}</p>
           </div>
         </div>
       )}
 
-      {/* Modal: Opret ny kunde */}
-      {showModal && (
-        <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-          onClick={closeModal}
+      {/* Filters */}
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
+          <input
+            type="text"
+            placeholder={t('searchPlaceholder')}
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="w-full pl-9 pr-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-sm focus:outline-none focus:ring-2 focus:ring-[#42D1B9]/40"
+          />
+          {search && (
+            <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2">
+              <X className="w-3.5 h-3.5 text-[var(--text-muted)]" />
+            </button>
+          )}
+        </div>
+        <select
+          value={statusFilter}
+          onChange={e => setStatusFilter(e.target.value)}
+          className="px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[#42D1B9]/40"
         >
-          <div
-            className="card p-6 w-full max-w-md mx-4 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
+          <option value="">Alle statuser</option>
+          {Object.entries(STATUS_LABELS).map(([k, v]) => (
+            <option key={k} value={k}>{v}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* List */}
+      {loading ? (
+        <div className="space-y-2">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="card p-4 animate-pulse h-20 bg-[var(--surface-hover)]" />
+          ))}
+        </div>
+      ) : customers.length === 0 ? (
+        <div className="card p-12 text-center">
+          <Users className="w-10 h-10 mx-auto mb-3 text-[var(--border)]" />
+          <p className="text-[var(--text-muted)]">{t('noCustomers')}</p>
+          <button
+            onClick={() => setShowCreate(true)}
+            className="mt-4 px-4 py-2 rounded-lg bg-[#42D1B9]/10 text-[#42D1B9] text-sm font-medium hover:bg-[#42D1B9]/20 transition-colors"
           >
-            {/* Modal header */}
-            <div className="flex items-center justify-between mb-5">
-              <h2
-                className="text-lg font-bold"
-                style={{ color: 'var(--text-primary)' }}
-              >
-                {t('newCustomer')}
-              </h2>
-              <button
-                onClick={closeModal}
-                className="p-1.5 rounded-lg transition-colors hover:opacity-70"
-                style={{ color: 'var(--text-muted)' }}
-              >
-                <X className="w-5 h-5" />
+            Opret den første kunde
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {customers.map(c => (
+            <Link
+              key={c.id}
+              href={`/customers/${c.id}`}
+              className="card p-4 flex items-center gap-4 hover:bg-[var(--surface-hover)] transition-colors group"
+            >
+              <div className="w-10 h-10 rounded-full bg-[#42D1B9]/10 flex items-center justify-center flex-shrink-0">
+                <span className="text-sm font-bold text-[#42D1B9]">
+                  {c.name.charAt(0).toUpperCase()}
+                </span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="font-semibold text-[var(--text-primary)] truncate">{c.name}</p>
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold flex-shrink-0 ${STATUS_COLORS[c.status] || 'bg-slate-100 text-slate-600'}`}>
+                    {STATUS_LABELS[c.status] || c.status}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3 mt-0.5 flex-wrap">
+                  {c.email && (
+                    <span className="flex items-center gap-1 text-xs text-[var(--text-muted)] truncate">
+                      <Mail className="w-3 h-3 flex-shrink-0" />{c.email}
+                    </span>
+                  )}
+                  {c.phone && (
+                    <span className="flex items-center gap-1 text-xs text-[var(--text-muted)]">
+                      <Phone className="w-3 h-3 flex-shrink-0" />{c.phone}
+                    </span>
+                  )}
+                  {c.address_city && (
+                    <span className="text-xs text-[var(--text-muted)]">{c.address_city}</span>
+                  )}
+                </div>
+                {c.tags && c.tags.length > 0 && (
+                  <div className="flex items-center gap-1 mt-1">
+                    <Tag className="w-3 h-3 text-[var(--text-muted)]" />
+                    {c.tags.map(tag => (
+                      <span key={tag} className="px-1.5 py-0.5 rounded bg-[var(--surface-hover)] text-[10px] text-[var(--text-muted)]">{tag}</span>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center gap-3 flex-shrink-0">
+                {c.estimated_value ? (
+                  <div className="text-right">
+                    <div className="flex items-center gap-1 text-sm font-semibold text-green-600 dark:text-green-400">
+                      <TrendingUp className="w-3.5 h-3.5" />
+                      {c.estimated_value.toLocaleString('da-DK')} kr
+                    </div>
+                  </div>
+                ) : null}
+                <ChevronRight className="w-4 h-4 text-[var(--text-muted)] group-hover:text-[#42D1B9] transition-colors" />
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
+
+      {/* Create modal */}
+      {showCreate && (
+        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => setShowCreate(false)}>
+          <div className="w-full max-w-lg card p-6 space-y-4 animate-fadeIn" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-[var(--text-primary)]">{t('newCustomer')}</h2>
+              <button onClick={() => setShowCreate(false)} className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)]">
+                <X className="w-5 h-5 text-[var(--text-muted)]" />
               </button>
             </div>
-
-            {/* Modal form */}
-            <form onSubmit={handleCreate} className="space-y-4">
+            <form onSubmit={handleCreate} className="space-y-3">
               <div>
-                <label
-                  className="block text-xs font-semibold mb-1"
-                  style={{ color: 'var(--text-secondary)' }}
-                >
-                  Navn <span className="text-red-500">*</span>
-                </label>
+                <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">Navn *</label>
                 <input
-                  type="text"
-                  value={newName}
-                  onChange={(e) => setNewName(e.target.value)}
-                  placeholder="Fulde navn eller virksomhedsnavn"
-                  className="w-full px-3 py-2 text-sm rounded-lg border"
-                  style={{
-                    borderColor: 'var(--border)',
-                    backgroundColor: 'var(--bg)',
-                    color: 'var(--text-primary)',
-                  }}
-                  autoFocus
+                  required
+                  value={form.name}
+                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                  className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-sm focus:outline-none focus:ring-2 focus:ring-[#42D1B9]/40"
+                  placeholder="Kundens navn"
                 />
               </div>
-
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">Email</label>
+                  <input
+                    type="email"
+                    value={form.email}
+                    onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                    className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-sm focus:outline-none focus:ring-2 focus:ring-[#42D1B9]/40"
+                    placeholder="kunde@email.dk"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">Telefon</label>
+                  <input
+                    type="tel"
+                    value={form.phone}
+                    onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
+                    className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-sm focus:outline-none focus:ring-2 focus:ring-[#42D1B9]/40"
+                    placeholder="+45 12 34 56 78"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="col-span-2">
+                  <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">Adresse</label>
+                  <input
+                    value={form.address_street}
+                    onChange={e => setForm(f => ({ ...f, address_street: e.target.value }))}
+                    className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-sm focus:outline-none focus:ring-2 focus:ring-[#42D1B9]/40"
+                    placeholder="Gade 1"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">Postnr.</label>
+                  <input
+                    value={form.address_zip}
+                    onChange={e => setForm(f => ({ ...f, address_zip: e.target.value }))}
+                    className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-sm focus:outline-none focus:ring-2 focus:ring-[#42D1B9]/40"
+                    placeholder="2100"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">By</label>
+                  <input
+                    value={form.address_city}
+                    onChange={e => setForm(f => ({ ...f, address_city: e.target.value }))}
+                    className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-sm focus:outline-none focus:ring-2 focus:ring-[#42D1B9]/40"
+                    placeholder="København"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">Estimeret værdi (kr)</label>
+                  <input
+                    type="number"
+                    value={form.estimated_value}
+                    onChange={e => setForm(f => ({ ...f, estimated_value: e.target.value }))}
+                    className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-sm focus:outline-none focus:ring-2 focus:ring-[#42D1B9]/40"
+                    placeholder="0"
+                  />
+                </div>
+              </div>
               <div>
-                <label
-                  className="block text-xs font-semibold mb-1"
-                  style={{ color: 'var(--text-secondary)' }}
-                >
-                  {t('phone')}
-                </label>
-                <input
-                  type="tel"
-                  value={newPhone}
-                  onChange={(e) => setNewPhone(e.target.value)}
-                  placeholder="+45 12 34 56 78"
-                  className="w-full px-3 py-2 text-sm rounded-lg border"
-                  style={{
-                    borderColor: 'var(--border)',
-                    backgroundColor: 'var(--bg)',
-                    color: 'var(--text-primary)',
-                  }}
+                <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">Noter</label>
+                <textarea
+                  value={form.notes}
+                  onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
+                  rows={2}
+                  className="w-full px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-sm focus:outline-none focus:ring-2 focus:ring-[#42D1B9]/40 resize-none"
+                  placeholder="Intern note om kunden..."
                 />
               </div>
-
-              <div>
-                <label
-                  className="block text-xs font-semibold mb-1"
-                  style={{ color: 'var(--text-secondary)' }}
-                >
-                  {t('email')}
-                </label>
-                <input
-                  type="email"
-                  value={newEmail}
-                  onChange={(e) => setNewEmail(e.target.value)}
-                  placeholder="kunde@eksempel.dk"
-                  className="w-full px-3 py-2 text-sm rounded-lg border"
-                  style={{
-                    borderColor: 'var(--border)',
-                    backgroundColor: 'var(--bg)',
-                    color: 'var(--text-primary)',
-                  }}
-                />
-              </div>
-
-              {createError && (
-                <p className="text-xs text-red-500">{createError}</p>
-              )}
-
-              <div className="flex gap-3 pt-1">
+              <div className="flex gap-2 pt-1">
                 <button
                   type="button"
-                  onClick={closeModal}
-                  className="flex-1 px-4 py-2.5 text-sm font-medium rounded-lg border transition-colors"
-                  style={{
-                    borderColor: 'var(--border)',
-                    color: 'var(--text-secondary)',
-                  }}
+                  onClick={() => setShowCreate(false)}
+                  className="flex-1 px-4 py-2.5 rounded-lg border border-[var(--border)] text-[var(--text-secondary)] text-sm font-medium hover:bg-[var(--surface-hover)] transition-colors"
                 >
-                  {t('cancel')}
+                  Annuller
                 </button>
                 <button
                   type="submit"
                   disabled={creating}
-                  className="btn-primary flex-1 px-4 py-2.5 text-sm font-semibold rounded-lg disabled:opacity-50"
+                  className="flex-1 px-4 py-2.5 rounded-lg bg-[#42D1B9] hover:bg-[#38C4AD] disabled:opacity-50 text-white text-sm font-semibold transition-colors"
                 >
-                  {creating ? 'Opretter...' : t('create')}
+                  {creating ? 'Opretter...' : 'Opret kunde'}
                 </button>
               </div>
             </form>

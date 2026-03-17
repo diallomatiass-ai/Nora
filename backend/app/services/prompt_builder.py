@@ -49,6 +49,7 @@ async def build_reply_prompt(
     knowledge_context: list[dict],
     similar_replies: list[dict],
     templates: list[Template],
+    style_samples: list[dict] | None = None,
 ) -> str:
     """Build a prompt for generating a reply to the given email.
 
@@ -105,12 +106,22 @@ async def build_reply_prompt(
             "\n\n## Available reply templates\n" + "\n".join(items)
         )
 
+    # --- Skrivestils-eksempler (fra godkendte svar) ---
+    style_examples_section = ""
+    if style_samples:
+        items = [f"- {s.get('document', '')}" for s in style_samples if s.get("document")]
+        if items:
+            style_examples_section = (
+                "\n\n## Brugerens skrivestil (nylige godkendte svar — efterlign denne stil)\n"
+                + "\n".join(items)
+            )
+
     # --- Style analysis from approved replies ---
     style_section = ""
-    if similar_replies:
+    if similar_replies or style_samples:
         style_section = """
 ## Writing style
-- IMPORTANT: Match the tone, vocabulary, and sentence structure from the previously approved replies below.
+- IMPORTANT: Match the tone, vocabulary, and sentence structure from the style examples and previously approved replies.
 - If approved replies are formal, be formal. If casual, be casual.
 - Mimic greeting style, sign-off style, and level of detail from the examples.
 - Prioritize consistency with the user's established communication patterns."""
@@ -136,6 +147,6 @@ Urgency: {email.urgency or 'unknown'}
 
 Body:
 {email.body_text or '(empty)'}
-{knowledge_section}{replies_section}{templates_section}
+{knowledge_section}{replies_section}{templates_section}{style_examples_section}
 
 ## Reply:"""

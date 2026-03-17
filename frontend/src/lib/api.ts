@@ -122,60 +122,6 @@ export const api = {
       body: JSON.stringify({ message, confirm: confirm ?? false, pending_action: pendingAction ?? null }),
     }),
 
-  // AI Secretary
-  getSecretary: () => fetchApi('/ai-secretary/'),
-  createSecretary: (data: {
-    business_name: string;
-    industry: string;
-    phone_number?: string;
-    cvr_number?: string;
-    contact_persons?: { name: string; phone: string; role: string; priority: number; notify_sms: boolean }[];
-    business_address?: string;
-    business_email?: string;
-    voice_id?: string;
-    greeting_text: string;
-    system_prompt: string;
-    required_fields: string[];
-    knowledge_items: Record<string, string>;
-    ivr_options?: { key: string; label: string; action: string; enabled: boolean }[];
-  }) => fetchApi('/ai-secretary/', { method: 'POST', body: JSON.stringify(data) }),
-  updateSecretary: (data: {
-    business_name?: string;
-    industry?: string;
-    phone_number?: string;
-    cvr_number?: string;
-    contact_persons?: { name: string; phone: string; role: string; priority: number; notify_sms: boolean }[];
-    business_address?: string;
-    business_email?: string;
-    voice_id?: string;
-    greeting_text?: string;
-    system_prompt?: string;
-    required_fields?: string[];
-    knowledge_items?: Record<string, string>;
-    ivr_options?: { key: string; label: string; action: string; enabled: boolean }[];
-    is_active?: boolean;
-  }) => fetchApi('/ai-secretary/', { method: 'PUT', body: JSON.stringify(data) }),
-  getIndustries: (businessName?: string) =>
-    fetchApi(`/ai-secretary/industries${businessName ? `?business_name=${encodeURIComponent(businessName)}` : ''}`),
-  getIndustryTemplate: (id: string, businessName?: string) =>
-    fetchApi(`/ai-secretary/industries/${id}${businessName ? `?business_name=${encodeURIComponent(businessName)}` : ''}`),
-  getCallDashboard: () => fetchApi('/ai-secretary/dashboard'),
-  getCalls: () => fetchApi('/ai-secretary/calls'),
-  updateCallStatus: (id: string, data: { status?: string; notes?: string }) =>
-    fetchApi(`/ai-secretary/calls/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-
-  // AI Secretary — create call
-  createCall: (data: {
-    caller_name?: string;
-    caller_phone?: string;
-    caller_address?: string;
-    summary: string;
-    transcript?: string;
-    required_fields_data?: Record<string, unknown>;
-    urgency?: string;
-    called_at?: string;
-  }) => fetchApi('/ai-secretary/calls', { method: 'POST', body: JSON.stringify(data) }),
-
   // Customers
   listCustomers: (params?: { search?: string; status?: string; skip?: number; limit?: number }) => {
     const searchParams = new URLSearchParams();

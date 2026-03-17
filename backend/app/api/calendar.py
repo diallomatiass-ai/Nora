@@ -30,8 +30,6 @@ class CalendarEventCreate(BaseModel):
     description: str | None = None
     start_time: datetime
     end_time: datetime
-    action_item_id: uuid.UUID | None = None
-    call_id: uuid.UUID | None = None
     event_type: str = "manual"
 
 
@@ -52,8 +50,6 @@ class CalendarEventResponse(BaseModel):
     description: str | None
     start_time: datetime
     end_time: datetime
-    action_item_id: uuid.UUID | None
-    call_id: uuid.UUID | None
     event_type: str
     created_at: datetime
 
@@ -166,8 +162,6 @@ async def create_calendar_event(
         description=data.description,
         start_time=data.start_time,
         end_time=data.end_time,
-        action_item_id=data.action_item_id,
-        call_id=data.call_id,
         event_type=data.event_type,
     )
     db.add(event)

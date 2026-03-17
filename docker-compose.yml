@@ -9,11 +9,11 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
-      PGPORT: "5433"
+      PGPORT: "5434"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -p 5433"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -p 5434"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -22,10 +22,11 @@ services:
     image: redis:7-alpine
     restart: unless-stopped
     network_mode: host
+    command: redis-server --port 6380
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-p", "6380", "ping"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -38,6 +39,7 @@ services:
       - chromadb_data:/chroma/chroma
     environment:
       ANONYMIZED_TELEMETRY: "false"
+      CHROMA_SERVER_HTTP_PORT: "8002"
 
   ollama:
     image: ollama/ollama:latest
@@ -59,10 +61,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      chromadb:
-        condition: service_started
-      ollama:
-        condition: service_started
     volumes:
       - ./backend:/app
 
@@ -80,8 +78,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      ollama:
-        condition: service_started
     volumes:
       - ./backend:/app
 

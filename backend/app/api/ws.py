@@ -7,7 +7,6 @@ Klienter forbinder på /api/ws?token=<JWT>.
 Serveren pusher JSON-beskeder ved:
   - Ny email modtaget       (type: "new_email")
   - AI-forslag klar         (type: "new_suggestion")
-  - Nyt action item         (type: "new_action_item")
 """
 
 from __future__ import annotations

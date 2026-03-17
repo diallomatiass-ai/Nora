@@ -56,7 +56,7 @@ export default function LoginPage() {
         <div className="flex flex-col items-center mb-8">
           <Image
             src={theme === 'dark' ? '/logo-dark.png' : '/logo.png'}
-            alt="Ahmes"
+            alt="Nora"
             width={240}
             height={144}
             className="object-contain"

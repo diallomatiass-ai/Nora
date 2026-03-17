@@ -38,6 +38,12 @@ def get_replies_collection() -> chromadb.Collection:
     return client.get_or_create_collection(name="approved_replies")
 
 
+def get_style_collection() -> chromadb.Collection:
+    """Return (or create) the 'style_samples' collection for skrivestils-læring."""
+    client = _get_chroma_client()
+    return client.get_or_create_collection(name="style_samples")
+
+
 async def _get_embedding(text: str) -> list[float]:
     """Request an embedding vector from the Ollama API.
 
@@ -130,6 +136,66 @@ async def add_approved_reply(
         metadatas=[metadata],
     )
     logger.info("Added approved reply %s to ChromaDB", suggestion_id)
+
+
+async def add_style_sample(
+    sample_id: str, text: str, metadata: dict
+) -> None:
+    """Gem et godkendt/redigeret svar som skrivestils-eksempel.
+
+    Args:
+        sample_id: Unik ID (typisk str(suggestion_id)).
+        text: Den godkendte svartekst.
+        metadata: Bør indeholde 'user_id' og 'category'.
+    """
+    try:
+        embedding = await _get_embedding(text)
+        collection = get_style_collection()
+        collection.upsert(
+            ids=[sample_id],
+            embeddings=[embedding],
+            documents=[text],
+            metadatas=[metadata],
+        )
+        logger.info("Gemt skrivestils-eksempel %s i ChromaDB", sample_id)
+    except Exception as exc:
+        logger.warning("Kunne ikke gemme skrivestils-eksempel: %s", exc)
+
+
+async def search_style_samples(
+    query: str, user_id: str, n_results: int = 2
+) -> list[dict]:
+    """Find lignende skrivestils-eksempler fra brugerens godkendte svar.
+
+    Args:
+        query: Søgetekst (typisk emne + brødtekst fra indgående email).
+        user_id: Filtrer til denne bruger.
+        n_results: Maks antal resultater.
+
+    Returns:
+        Liste af dicts med keys: id, document, metadata, distance.
+    """
+    try:
+        embedding = await _get_embedding(query)
+        collection = get_style_collection()
+        results = collection.query(
+            query_embeddings=[embedding],
+            n_results=n_results,
+            where={"user_id": user_id},
+        )
+        output: list[dict] = []
+        if results and results["ids"] and results["ids"][0]:
+            for i, doc_id in enumerate(results["ids"][0]):
+                output.append({
+                    "id": doc_id,
+                    "document": results["documents"][0][i] if results["documents"] else "",
+                    "metadata": results["metadatas"][0][i] if results["metadatas"] else {},
+                    "distance": results["distances"][0][i] if results["distances"] else None,
+                })
+        return output
+    except Exception as exc:
+        logger.warning("Style-søgning fejlede: %s", exc)
+        return []
 
 
 async def search_similar_replies(

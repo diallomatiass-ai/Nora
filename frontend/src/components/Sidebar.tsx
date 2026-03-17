@@ -4,13 +4,12 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
-import { Inbox, LayoutDashboard, FileText, BookOpen, Settings, Sun, Moon, Phone, Users, Calendar, ShieldCheck, CreditCard } from 'lucide-react'
+import { Inbox, LayoutDashboard, FileText, BookOpen, Settings, Sun, Moon, Users, Calendar, ShieldCheck, CreditCard, NotebookPen } from 'lucide-react'
 import { useTranslation } from '@/lib/i18n'
 import { api } from '@/lib/api'
 
 interface BadgeCounts {
   unread: number
-  newCalls: number
   overdueTasks: number
   todayEvents: number
 }
@@ -25,7 +24,7 @@ interface CurrentUser {
 export default function Sidebar() {
   const pathname = usePathname()
   const { t, theme, setTheme } = useTranslation()
-  const [badges, setBadges] = useState<BadgeCounts>({ unread: 0, newCalls: 0, overdueTasks: 0, todayEvents: 0 })
+  const [badges, setBadges] = useState<BadgeCounts>({ unread: 0, overdueTasks: 0, todayEvents: 0 })
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null)
 
   useEffect(() => {
@@ -40,14 +39,12 @@ export default function Sidebar() {
 
     Promise.all([
       api.getDashboardSummary().catch(() => null),
-      api.getCallDashboard().catch(() => null),
       api.getReminderCount().catch(() => null),
       api.getCalendarEvents(todayStart.toISOString(), todayEnd.toISOString()).catch(() => null),
-    ]).then(([dash, calls, reminderData, calEvents]) => {
+    ]).then(([dash, reminderData, calEvents]) => {
       const reminderCount = reminderData?.count ?? 0
       setBadges({
         unread: (dash?.unread ?? 0) + reminderCount,
-        newCalls: calls?.new_calls ?? 0,
         overdueTasks: 0,
         todayEvents: Array.isArray(calEvents) ? calEvents.length : 0,
       })
@@ -57,9 +54,9 @@ export default function Sidebar() {
   const navItems = [
     { href: '/', label: t('dashboard'), icon: LayoutDashboard, badge: 0 },
     { href: '/inbox', label: t('inbox'), icon: Inbox, badge: badges.unread },
-    { href: '/ai-secretary', label: t('aiSecretary'), icon: Phone, badge: badges.newCalls },
     { href: '/customers', label: t('customers'), icon: Users, badge: 0 },
     { href: '/calendar', label: 'Kalender', icon: Calendar, badge: badges.todayEvents },
+    { href: '/meetings', label: 'Mødenotater', icon: NotebookPen, badge: 0 },
     { href: '/templates', label: t('templates'), icon: FileText, badge: 0 },
     { href: '/knowledge', label: t('knowledgeBase'), icon: BookOpen, badge: 0 },
     { href: '/settings', label: t('settings'), icon: Settings, badge: 0 },
@@ -80,7 +77,7 @@ export default function Sidebar() {
           <div className="flex items-center justify-center">
             <Image
               src={theme === 'dark' ? '/logo-dark.png' : '/logo.png'}
-              alt="Ahmes"
+              alt="Nora"
               width={150}
               height={90}
               className="object-contain"

@@ -22,15 +22,9 @@ class CalendarEvent(Base):
     start_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     end_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
-    # Kilde (optional FK — hvad skabte dette event?)
-    action_item_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("action_items.id"))
-    call_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("secretary_calls.id"))
-
-    event_type: Mapped[str] = mapped_column(String(30), default="manual")  # manual | action_item | call
+    event_type: Mapped[str] = mapped_column(String(30), default="manual")  # manual | calendar_sync
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     user = relationship("User", back_populates="calendar_events")
     account = relationship("MailAccount", back_populates="calendar_events")
-    action_item = relationship("ActionItem", back_populates="calendar_events")
-    call = relationship("SecretaryCall", back_populates="calendar_events")
