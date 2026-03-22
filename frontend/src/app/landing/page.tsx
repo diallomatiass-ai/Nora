@@ -14,38 +14,38 @@ const features = [
   {
     icon: Zap,
     title: 'AI svarer på 2 minutter',
-    desc: 'Nora læser, klassificerer og udarbejder et svarforslag — du godkender med ét klik.',
+    desc: 'Nora læser, klassificerer og udarbejder et svarforslag i din tone — du godkender med ét klik.',
   },
   {
     icon: ShieldCheck,
     title: '100% EU-data. Ingen ChatGPT.',
-    desc: 'Al AI-processering sker i Frankfurt (AWS eu-central-1). Data forlader aldrig EU.',
+    desc: 'Al AI-processering sker i Frankfurt (AWS eu-central-1). Data forlader aldrig EU — afgørende for fortrolig korrespondance.',
   },
   {
     icon: Mic,
     title: 'Møde-agent',
-    desc: 'Nora transkriberer dine møder live og sender referatet til deltagerne automatisk.',
+    desc: 'Nora transkriberer dine møder live, skriver referat og sender det til deltagerne automatisk.',
   },
   {
     icon: Clock,
     title: 'Spar 2-3 timer om dagen',
-    desc: 'SMV\'er bruger i snit 2,8 timer dagligt på mails. Nora håndterer 80% af dem.',
+    desc: 'Professionelle bruger i snit 2,8 timer dagligt på mails. Nora håndterer 80% af dem — uden at du mister kontrollen.',
   },
   {
     icon: Globe,
-    title: 'Dansk, svensk og norsk',
-    desc: 'Nora forstår og svarer på alle tre skandinaviske sprog — tilpasset din tone.',
+    title: 'Dansk, engelsk og mere',
+    desc: 'Nora forstår og svarer på tværs af sprog — og tilpasser sig præcis din faglige tone og terminologi.',
   },
   {
     icon: Mail,
     title: 'Kobles til Gmail & Outlook',
-    desc: 'Ingen ny indbakke. Nora arbejder med de konti du allerede har.',
+    desc: 'Ingen ny indbakke at lære. Nora arbejder direkte med de konti du allerede bruger.',
   },
 ]
 
 const steps = [
   { num: '01', title: 'Forbind din mailkonto', desc: 'Gmail eller Outlook. Tager under 2 minutter.' },
-  { num: '02', title: 'Nora lærer din stil', desc: 'Fortæl Nora om din virksomhed og ønskede tone.' },
+  { num: '02', title: 'Nora lærer din stil', desc: 'Fortæl Nora om din rolle, dine fagtermer og den tone du ønsker.' },
   { num: '03', title: 'Godkend med ét klik', desc: 'Nora foreslår — du beslutter. Altid.' },
 ]
 
@@ -53,7 +53,7 @@ const plans = [
   {
     name: 'Starter',
     price: '199',
-    desc: 'Til dig der vil have styr på indbakken',
+    desc: 'Til dig der vil have kontrol over indbakken',
     features: ['1 indbakke og kalender', 'AI-svarforslag i din tone', 'Møde-notetaker', 'Data processeres i EU (Frankfurt)', 'E-mail support'],
     cta: 'Start gratis',
     highlight: false,
@@ -61,15 +61,15 @@ const plans = [
   {
     name: 'Pro',
     price: '399',
-    desc: 'Til teams og vækstvirksomheder',
-    features: ['Flere indbakker og kalendre', 'AI-svarforslag i din tone', 'Møde-notetaker', 'Skabeloner og videnbase', 'Flersproget (da/sv/no/en)', 'Data processeres i EU (Frankfurt)', 'Chat support'],
+    desc: 'Til travle professionelle og teams',
+    features: ['Flere indbakker og kalendre', 'AI-svarforslag i din tone', 'Møde-notetaker', 'Skabeloner og videnbase', 'Flersproget (da/en/sv/no)', 'Data processeres i EU (Frankfurt)', 'Chat support'],
     cta: 'Start gratis',
     highlight: true,
   },
   {
     name: 'Business',
     price: '999',
-    desc: 'Til større virksomheder',
+    desc: 'Til teams og organisationer',
     features: ['Alt i Pro', 'Dedikeret onboarding', 'SLA 99,9%', 'GDPR DPA-aftale', 'API-adgang', 'Telefon support'],
     cta: 'Kontakt os',
     highlight: false,
@@ -78,19 +78,19 @@ const plans = [
 
 const faqs = [
   {
-    q: 'Er mine kunders data sikre?',
-    a: 'Ja. Al AI-processering sker via AWS Bedrock i eu-central-1 (Frankfurt). Anthropic ser aldrig indholdet direkte. Vi har en DPA (Data Processing Agreement) og er fuldt GDPR-compliant.',
+    q: 'Er fortrolig korrespondance sikker?',
+    a: 'Ja. Al AI-processering sker via AWS Bedrock i eu-central-1 (Frankfurt). Anthropic ser aldrig indholdet direkte. Vi har en DPA (Data Processing Agreement) og er fuldt GDPR-compliant — også ved behandling af fortrolige klient- og forretningsoplysninger.',
   },
   {
     q: 'Sender Nora mails automatisk?',
-    a: 'Nej — medmindre du beder om det. Standard-flowet er: Nora foreslår, du godkender, Nora sender. Du har altid det sidste ord.',
+    a: 'Nej — medmindre du eksplicit beder om det. Standard-flowet er: Nora foreslår, du godkender, Nora sender. Du har altid det sidste ord.',
   },
   {
-    q: 'Virker det med vores branche-sprog?',
-    a: 'Ja. Du kan tilpasse Noras videnbase med din virksomheds fagtermer, priser og tone. Jo mere du fortæller Nora, desto bedre bliver forslagene.',
+    q: 'Virker det med min branches fagsprog?',
+    a: 'Ja. Du kan tilpasse Noras videnbase med din organisations fagtermer, standardformuleringer og ønskede tone — uanset om du er advokat, receptionist, leder eller noget helt andet.',
   },
   {
-    q: 'Hvad sker der efter de 14 dage?',
+    q: 'Hvad sker der efter de 7 dage?',
     a: 'Du vælger selv et abonnement eller stopper — ingen automatisk betaling. Vi sender en påmindelse 3 dage før prøveperioden udløber.',
   },
 ]
@@ -152,14 +152,14 @@ export default function LandingPage() {
           </div>
 
           <h1 className="text-5xl md:text-6xl font-bold leading-[1.1] tracking-tight mb-6">
-            Din virksomhed svarer
+            Du svarer hurtigere.
             <br />
-            <span className="text-[#0CA9BA]">mails på 2 minutter.</span>
+            <span className="text-[#0CA9BA]">Nora gør arbejdet.</span>
           </h1>
 
           <p className="text-xl text-[#4A5568] max-w-2xl mx-auto mb-10 leading-relaxed">
-            Nora er en AI-mailassistent til danske SMV'er. Læser dine kundemails,
-            foreslår svar og sender — kun når du godkender.
+            Nora er en AI-mailassistent til alle der bruger for meget tid foran indbakken.
+            Læser dine mails, foreslår svar i din tone og sender — kun når du godkender.
             Al data forbliver i EU.
           </p>
 
@@ -223,9 +223,9 @@ export default function LandingPage() {
                 {/* Email rows */}
                 <div className="bg-white border border-[#E4E7EE] rounded-xl overflow-hidden">
                   {[
-                    { name: 'Mads Hansen', subj: 'Tilbud på nyt projekt', badge: 'Tilbud', urgent: true },
-                    { name: 'Trine Olsen', subj: 'Spørgsmål om priser', badge: 'Forespørgsel', urgent: false },
-                    { name: 'Per Sørensen', subj: 'Klage over levering', badge: 'Klage', urgent: true },
+                    { name: 'Sofie Mathiesen', subj: 'Kontraktgennemgang — svar haster', badge: 'Haster', urgent: true },
+                    { name: 'Board of Directors', subj: 'Referat fra Q1-møde', badge: 'Møde', urgent: false },
+                    { name: 'Lars Winther', subj: 'Tilbud på konsulentopgave', badge: 'Tilbud', urgent: true },
                   ].map((email, i) => (
                     <div key={i} className={`flex items-center gap-3 px-4 py-3 ${i < 2 ? 'border-b border-[#E4E7EE]' : ''} ${email.urgent ? 'border-l-2 border-l-[#0CA9BA]' : ''}`}>
                       <div className="w-8 h-8 rounded-full bg-[#122B4A] flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
@@ -270,8 +270,8 @@ export default function LandingPage() {
       <section className="py-24 px-6">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Alt hvad din virksomhed har brug for</h2>
-            <p className="text-[#4A5568] text-lg">Bygget til SMV'er der drukner i kundemails.</p>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Alt hvad en travl professionel har brug for</h2>
+            <p className="text-[#4A5568] text-lg">Uanset om du er advokat, receptionist, leder eller projektchef.</p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((f) => {
@@ -295,12 +295,12 @@ export default function LandingPage() {
         <div className="max-w-4xl mx-auto text-center text-white">
           <ShieldCheck className="w-10 h-10 text-[#0CA9BA] mx-auto mb-4" />
           <h2 className="text-2xl md:text-3xl font-bold mb-4">
-            Dine kunders data forbliver i EU
+            Fortrolig korrespondance forbliver i EU
           </h2>
           <p className="text-white/70 text-lg max-w-2xl mx-auto leading-relaxed">
             Nora bruger AWS Bedrock i eu-central-1 (Frankfurt) — ikke ChatGPT, ikke OpenAI.
-            Anthropic ser aldrig dine emails direkte. Vi har en DPA og opfylder fuldt ud GDPR og
-            Datatilsynets retningslinjer for dansk erhvervsliv.
+            Anthropic ser aldrig dine mails direkte. Vi har en DPA og opfylder fuldt ud GDPR og
+            Datatilsynets retningslinjer — kritisk for advokater, læger, HR og alle der håndterer følsomme oplysninger.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-6 text-sm text-white/60">
             {['AWS eu-central-1', 'DPA-aftale', 'ISO 27001 (AWS)', 'GDPR Art. 28', 'Ingen tredjepart'].map(t => (
@@ -473,10 +473,10 @@ export default function LandingPage() {
       <section className="py-24 px-6 bg-gradient-to-br from-[#122B4A] to-[#0a1f38]">
         <div className="max-w-3xl mx-auto text-center text-white">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Klar til at spare 2 timer om dagen?
+            Klar til at genvinde din tid?
           </h2>
           <p className="text-white/70 text-lg mb-10">
-            Tilmeld dig vores beta — gratis i 14 dage. Ingen kreditkort.
+            Prøv Nora gratis i 7 dage. Ingen kreditkort. Ingen binding.
           </p>
           <Link
             href="/login"
