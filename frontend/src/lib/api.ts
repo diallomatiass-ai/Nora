@@ -33,7 +33,7 @@ export const api = {
   // Auth
   login: (email: string, password: string) =>
     fetchApi('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
-  register: (data: { email: string; name: string; password: string; company_name?: string }) =>
+  register: (data: { email: string; name: string; password: string; company_name?: string; phone?: string; country?: string }) =>
     fetchApi('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
   getMe: () => fetchApi('/auth/me'),
   updateMe: (data: { name?: string }) =>

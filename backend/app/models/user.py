@@ -16,8 +16,18 @@ class User(Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     company_name: Mapped[str | None] = mapped_column(String(255))
+    phone: Mapped[str | None] = mapped_column(String(50))
+    country: Mapped[str | None] = mapped_column(String(100))
     role: Mapped[str] = mapped_column(String(50), default="user")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    # Konto-gendannelse
+    password_reset_token: Mapped[str | None] = mapped_column(String(255), index=True)
+    password_reset_expires: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    # 2-trins sikkerhed
+    two_fa_enabled: Mapped[bool] = mapped_column(default=False)
+    two_fa_secret: Mapped[str | None] = mapped_column(String(255))
 
     # Stripe abonnement
     stripe_customer_id: Mapped[str | None] = mapped_column(String(255), unique=True)

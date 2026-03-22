@@ -5,6 +5,28 @@ import Image from 'next/image'
 import { api } from '@/lib/api'
 import { useTranslation } from '@/lib/i18n'
 
+const COUNTRY_CODES = [
+  { code: '+45', flag: '🇩🇰', name: 'Danmark' },
+  { code: '+46', flag: '🇸🇪', name: 'Sverige' },
+  { code: '+47', flag: '🇳🇴', name: 'Norge' },
+  { code: '+49', flag: '🇩🇪', name: 'Tyskland' },
+  { code: '+44', flag: '🇬🇧', name: 'UK' },
+  { code: '+1',  flag: '🇺🇸', name: 'USA' },
+  { code: '+31', flag: '🇳🇱', name: 'Holland' },
+  { code: '+33', flag: '🇫🇷', name: 'Frankrig' },
+  { code: '+34', flag: '🇪🇸', name: 'Spanien' },
+  { code: '+39', flag: '🇮🇹', name: 'Italien' },
+  { code: '+41', flag: '🇨🇭', name: 'Schweiz' },
+  { code: '+358', flag: '🇫🇮', name: 'Finland' },
+  { code: '+48', flag: '🇵🇱', name: 'Polen' },
+]
+
+const COUNTRIES = [
+  'Danmark', 'Sverige', 'Norge', 'Finland', 'Tyskland', 'Holland',
+  'Belgien', 'Frankrig', 'Spanien', 'Italien', 'Schweiz', 'Østrig',
+  'Polen', 'UK', 'USA', 'Canada', 'Australien', 'Andet',
+]
+
 export default function LoginPage() {
   const { t, theme } = useTranslation()
   const [isLogin, setIsLogin] = useState(true)
@@ -12,6 +34,9 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
   const [companyName, setCompanyName] = useState('')
+  const [phoneCode, setPhoneCode] = useState('+45')
+  const [phoneNumber, setPhoneNumber] = useState('')
+  const [country, setCountry] = useState('Danmark')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -25,7 +50,13 @@ export default function LoginPage() {
         localStorage.setItem('token', data.access_token)
         window.location.href = '/'
       } else {
-        await api.register({ email, name, password, company_name: companyName || undefined })
+        const phone = phoneNumber ? `${phoneCode}${phoneNumber.replace(/^0/, '')}` : undefined
+        await api.register({
+          email, name, password,
+          company_name: companyName || undefined,
+          phone,
+          country,
+        })
         const data = await api.login(email, password)
         localStorage.setItem('token', data.access_token)
         window.location.href = '/'
@@ -80,11 +111,45 @@ export default function LoginPage() {
               <>
                 <div>
                   <label className="block text-sm font-medium text-slate-600 dark:text-zinc-400 mb-1.5">{t('name')}</label>
-                  <input type="text" value={name} onChange={(e) => setName(e.target.value)} required className="input-dark" />
+                  <input type="text" value={name} onChange={(e) => setName(e.target.value)} required className="input-dark" placeholder="Dit fulde navn" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-600 dark:text-zinc-400 mb-1.5">{t('companyName')}</label>
-                  <input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} className="input-dark" />
+                  <input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} className="input-dark" placeholder="Firmanavn (valgfrit)" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-600 dark:text-zinc-400 mb-1.5">Telefonnummer</label>
+                  <div className="flex gap-2">
+                    <select
+                      value={phoneCode}
+                      onChange={(e) => setPhoneCode(e.target.value)}
+                      className="input-dark w-28 flex-shrink-0"
+                    >
+                      {COUNTRY_CODES.map(c => (
+                        <option key={c.code} value={c.code}>{c.flag} {c.code}</option>
+                      ))}
+                    </select>
+                    <input
+                      type="tel"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      className="input-dark flex-1"
+                      placeholder="20 12 34 56"
+                    />
+                  </div>
+                  <p className="text-xs text-slate-400 dark:text-zinc-500 mt-1">Bruges til kontogendannelse og 2-trins login</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-600 dark:text-zinc-400 mb-1.5">Land</label>
+                  <select
+                    value={country}
+                    onChange={(e) => setCountry(e.target.value)}
+                    className="input-dark"
+                  >
+                    {COUNTRIES.map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
                 </div>
               </>
             )}

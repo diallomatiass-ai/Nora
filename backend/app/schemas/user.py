@@ -8,6 +8,8 @@ class UserCreate(BaseModel):
     name: str
     password: str
     company_name: str | None = None
+    phone: str | None = None
+    country: str | None = None
 
 
 class UserLogin(BaseModel):
@@ -20,7 +22,10 @@ class UserResponse(BaseModel):
     email: str
     name: str
     company_name: str | None
+    phone: str | None
+    country: str | None
     role: str
+    two_fa_enabled: bool
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -29,6 +34,8 @@ class UserResponse(BaseModel):
 class UserUpdate(BaseModel):
     name: str | None = None
     company_name: str | None = None
+    phone: str | None = None
+    country: str | None = None
 
 
 class Token(BaseModel):

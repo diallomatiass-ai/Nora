@@ -27,6 +27,8 @@ async def register(request: Request, data: UserCreate, db: AsyncSession = Depend
         name=data.name,
         password_hash=hash_password(data.password),
         company_name=data.company_name,
+        phone=data.phone,
+        country=data.country,
     )
     db.add(user)
     await db.commit()
@@ -57,6 +59,10 @@ async def update_me(data: UserUpdate, db: AsyncSession = Depends(get_db), user: 
         user.name = data.name
     if data.company_name is not None:
         user.company_name = data.company_name
+    if data.phone is not None:
+        user.phone = data.phone
+    if data.country is not None:
+        user.country = data.country
     await db.commit()
     await db.refresh(user)
     return user
