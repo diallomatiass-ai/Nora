@@ -406,8 +406,8 @@ export default function SettingsPage() {
 
             {/* Infoboks */}
             <div className="bg-[#0CA9BA]/5 border border-[#0CA9BA]/20 rounded-xl p-4 text-sm text-[var(--text-secondary)]">
-              <p className="font-medium text-[var(--text-primary)] mb-1">AI-motor: AWS Bedrock (eu-central-1)</p>
-              <p>Al AI-processering sker i Frankfurt. Data forlader aldrig EU. Anthropic ser aldrig dine emails direkte.</p>
+              <p className="font-medium text-[var(--text-primary)] mb-1">GDPR-compliant AI</p>
+              <p>Al AI-processering sker inden for EU. Dine data forlader aldrig EU og deles aldrig med tredjepart.</p>
             </div>
 
             <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#122B4A] dark:bg-[#0CA9BA] rounded-lg hover:bg-[#1a3660] dark:hover:bg-[#3DBFCC] transition-colors">

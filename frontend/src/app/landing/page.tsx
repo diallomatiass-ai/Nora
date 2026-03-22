@@ -18,8 +18,8 @@ const features = [
   },
   {
     icon: ShieldCheck,
-    title: '100% EU-data. Ingen ChatGPT.',
-    desc: 'Al AI-processering sker i Frankfurt (AWS eu-central-1). Data forlader aldrig EU — afgørende for fortrolig korrespondance.',
+    title: '100% EU-data. Fuldt GDPR-compliant.',
+    desc: 'Al AI-processering sker inden for EU. Dine data forlader aldrig EU og deles aldrig med tredjepart.',
   },
   {
     icon: Mic,
@@ -54,7 +54,7 @@ const plans = [
     name: 'Starter',
     price: '199',
     desc: 'Til dig der vil have kontrol over indbakken',
-    features: ['1 indbakke og kalender', 'AI-svarforslag i din tone', 'Møde-notetaker', 'Data processeres i EU (Frankfurt)', 'E-mail support'],
+    features: ['1 indbakke og kalender', 'AI-svarforslag i din tone', 'Møde-notetaker', 'AI processeret i EU · GDPR-compliant', 'E-mail support'],
     cta: 'Start gratis',
     highlight: false,
   },
@@ -62,7 +62,7 @@ const plans = [
     name: 'Pro',
     price: '399',
     desc: 'Til travle professionelle og teams',
-    features: ['Flere indbakker og kalendre', 'AI-svarforslag i din tone', 'Møde-notetaker', 'Skabeloner og videnbase', 'Flersproget (da/en/sv/no)', 'Data processeres i EU (Frankfurt)', 'Chat support'],
+    features: ['Flere indbakker og kalendre', 'AI-svarforslag i din tone', 'Møde-notetaker', 'Skabeloner og videnbase', 'Flersproget (da/en/sv/no)', 'AI processeret i EU · GDPR-compliant', 'Chat support'],
     cta: 'Start gratis',
     highlight: true,
   },
@@ -79,7 +79,7 @@ const plans = [
 const faqs = [
   {
     q: 'Er fortrolig korrespondance sikker?',
-    a: 'Ja. Al AI-processering sker via AWS Bedrock i eu-central-1 (Frankfurt). Anthropic ser aldrig indholdet direkte. Vi har en DPA (Data Processing Agreement) og er fuldt GDPR-compliant — også ved behandling af fortrolige klient- og forretningsoplysninger.',
+    a: 'Ja. Al AI-processering sker inden for EU. Dine data forlader aldrig EU og deles aldrig med tredjepart. Vi har en DPA (Data Processing Agreement) og er fuldt GDPR-compliant — også ved behandling af fortrolige klient- og forretningsoplysninger.',
   },
   {
     q: 'Sender Nora mails automatisk?',
@@ -148,7 +148,7 @@ export default function LandingPage() {
           {/* Trust badge */}
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#0CA9BA]/10 border border-[#0CA9BA]/25 mb-6">
             <ShieldCheck className="w-3.5 h-3.5 text-[#0CA9BA]" />
-            <span className="text-xs font-semibold text-[#0CA9BA]">GDPR-compliant · Data i EU · Ingen ChatGPT</span>
+            <span className="text-xs font-semibold text-[#0CA9BA]">GDPR-compliant · Data i EU · Ingen deling med tredjepart</span>
           </div>
 
           <h1 className="text-5xl md:text-6xl font-bold leading-[1.1] tracking-tight mb-6">
@@ -298,12 +298,11 @@ export default function LandingPage() {
             Fortrolig korrespondance forbliver i EU
           </h2>
           <p className="text-white/70 text-lg max-w-2xl mx-auto leading-relaxed">
-            Nora bruger AWS Bedrock i eu-central-1 (Frankfurt) — ikke ChatGPT, ikke OpenAI.
-            Anthropic ser aldrig dine mails direkte. Vi har en DPA og opfylder fuldt ud GDPR og
-            Datatilsynets retningslinjer — kritisk for advokater, læger, HR og alle der håndterer følsomme oplysninger.
+            Noras AI processerer alt inden for EU. Dine data forlader aldrig EU og deles aldrig med tredjepart.
+            Vi opfylder fuldt ud GDPR og Datatilsynets retningslinjer — kritisk for advokater, læger, HR og alle der håndterer følsomme oplysninger.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-6 text-sm text-white/60">
-            {['AWS eu-central-1', 'DPA-aftale', 'ISO 27001 (AWS)', 'GDPR Art. 28', 'Ingen tredjepart'].map(t => (
+            {['AI processeret i EU', 'DPA-aftale', 'GDPR Art. 28', 'Ingen deling med tredjepart', 'Dansk support'].map(t => (
               <div key={t} className="flex items-center gap-1.5">
                 <Check className="w-4 h-4 text-[#0CA9BA]" />
                 {t}
