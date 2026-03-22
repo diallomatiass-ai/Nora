@@ -313,71 +313,69 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Fyxer vs Nora sammenligning */}
-      <section className="py-20 px-4 bg-gradient-to-b from-white to-slate-50 dark:from-slate-900 dark:to-slate-950">
+      {/* Sammenligning — generisk */}
+      <section className="py-20 px-6 bg-[#F8F9FB]">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-4">
-              Nora vs. Fyxer — hvad er forskellen?
+            <h2 className="text-3xl md:text-4xl font-bold text-[#0D1321] mb-4">
+              Nora vs. traditionelle løsninger
             </h2>
-            <p className="text-lg text-slate-600 dark:text-slate-400">
-              Vi har bygget Nora for at løse præcis de problemer Fyxers kunder klager over.
+            <p className="text-lg text-[#4A5568]">
+              De fleste AI-mailassistenter er bygget til at imponere i en demo. Nora er bygget til at virke i hverdagen.
             </p>
           </div>
 
-          <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg">
+          <div className="overflow-hidden rounded-2xl border border-[#E4E7EE] shadow-sm">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-slate-900 dark:bg-slate-800">
+                <tr className="bg-[#122B4A]">
                   <th className="text-left px-6 py-4 text-slate-400 font-medium w-2/5">Funktion</th>
                   <th className="px-6 py-4 text-center">
                     <span className="text-white font-bold text-base">Nora</span>
                   </th>
                   <th className="px-6 py-4 text-center">
-                    <span className="text-slate-400 font-medium">Fyxer</span>
+                    <span className="text-slate-400 font-medium">Typiske alternativer</span>
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              <tbody className="divide-y divide-[#E4E7EE]">
                 {[
-                  ['Data i EU (GDPR)', true, false],
-                  ['Gennemsigtig pris — ingen skjulte gebyrer', true, false],
-                  ['Brugerdefinerede email-kategorier', true, false],
-                  ['Bruger godkender ALTID før afsendelse', true, false],
-                  ['Kan ikke sende uden samtykke', true, false],
-                  ['Nem afmelding — ingen binding', true, false],
-                  ['AI-opsummering pr. email', true, false],
-                  ['Mødenotetager med AI', true, false],
-                  ['Open source / lokal AI-mulighed', true, false],
+                  ['AI-processering i EU (GDPR)', true, false],
+                  ['Du godkender altid før afsendelse', true, false],
+                  ['Tilpasset din tone og fagterminologi', true, false],
+                  ['Mødenotetager med AI-referat', true, false],
+                  ['Gennemsigtig fast pris', true, false],
+                  ['Fungerer med Gmail og Outlook', true, true],
                   ['Dansk support', true, false],
-                ].map(([feature, nora, fyxer], i) => (
-                  <tr key={i} className={i % 2 === 0 ? 'bg-white dark:bg-slate-900' : 'bg-slate-50 dark:bg-slate-900/50'}>
-                    <td className="px-6 py-3.5 text-slate-700 dark:text-slate-300 font-medium">{feature as string}</td>
+                  ['Nem opsigelse — ingen binding', true, false],
+                ].map(([feature, nora, other], i) => (
+                  <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-[#F8F9FB]'}>
+                    <td className="px-6 py-3.5 text-[#374151] font-medium">{feature as string}</td>
                     <td className="px-6 py-3.5 text-center">
                       {nora ? (
-                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-teal-100 dark:bg-teal-500/20">
-                          <svg className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#0CA9BA]/10">
+                          <svg className="w-3.5 h-3.5 text-[#0CA9BA]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                           </svg>
                         </span>
                       ) : (
-                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-red-100 dark:bg-red-500/20">
-                          <svg className="w-3.5 h-3.5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-red-100">
+                          <svg className="w-3.5 h-3.5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                           </svg>
                         </span>
                       )}
                     </td>
                     <td className="px-6 py-3.5 text-center">
-                      {fyxer ? (
-                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-teal-100 dark:bg-teal-500/20">
-                          <svg className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                      {other ? (
+                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#0CA9BA]/10">
+                          <svg className="w-3.5 h-3.5 text-[#0CA9BA]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                           </svg>
                         </span>
                       ) : (
-                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-red-100 dark:bg-red-500/20">
-                          <svg className="w-3.5 h-3.5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-red-100">
+                          <svg className="w-3.5 h-3.5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                           </svg>
                         </span>
@@ -388,10 +386,6 @@ export default function LandingPage() {
               </tbody>
             </table>
           </div>
-
-          <p className="text-center text-xs text-slate-500 dark:text-slate-500 mt-4">
-            * Baseret på offentlige Fyxer Trustpilot-anmeldelser (uk.trustpilot.com/review/fyxer.com)
-          </p>
         </div>
       </section>
 
