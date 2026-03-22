@@ -1,0 +1,12 @@
+# Nora Meeting Agent — afhængigheder
+# Installer med: pip install -r requirements.txt
+
+# Lyd-capture
+sounddevice==0.5.1
+numpy==1.26.4
+
+# Lokal speech-to-text (100% lokalt — ingen data sendes nogen steder)
+faster-whisper==1.1.0
+
+# HTTP klient til Nora backend
+httpx==0.27.2

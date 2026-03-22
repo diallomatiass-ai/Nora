@@ -215,3 +215,130 @@ async def process_meeting(
         action_items=processed["action_items"],
         participants=processed["participants"],
     )
+
+
+# ── Transcript chunk ─────────────────────────────────────────────────────────
+
+class TranscriptChunk(BaseModel):
+    speaker: str
+    text: str
+    timestamp: str  # "MM:SS" format
+
+
+@router.post("/{meeting_id}/transcript-chunk")
+async def add_transcript_chunk(
+    meeting_id: uuid.UUID,
+    chunk: TranscriptChunk,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Tilføj en transskriptionslinje til et møde (live optagelse)."""
+    result = await db.execute(
+        select(MeetingNote).where(MeetingNote.id == meeting_id, MeetingNote.user_id == user.id)
+    )
+    meeting = result.scalar_one_or_none()
+    if not meeting:
+        raise HTTPException(status_code=404, detail="Møde ikke fundet")
+
+    line = f"[{chunk.speaker}] {chunk.timestamp}: {chunk.text}"
+    existing = meeting.transcript or ""
+    meeting.transcript = (existing + "\n" + line).strip()
+    await db.commit()
+    return {"ok": True}
+
+
+# ── Send referat ─────────────────────────────────────────────────────────────
+
+class SendReferatRequest(BaseModel):
+    recipients: list[str]
+    summary: str
+    action_items: list[str]
+    full_text: str
+
+
+@router.post("/{meeting_id}/send-referat")
+async def send_referat(
+    meeting_id: uuid.UUID,
+    data: SendReferatRequest,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Gem referat og returner mailto-link til afsendelse."""
+    result = await db.execute(
+        select(MeetingNote).where(MeetingNote.id == meeting_id, MeetingNote.user_id == user.id)
+    )
+    meeting = result.scalar_one_or_none()
+    if not meeting:
+        raise HTTPException(status_code=404, detail="Møde ikke fundet")
+
+    meeting.summary = data.summary
+    meeting.action_items = json.dumps(data.action_items, ensure_ascii=False)
+    await db.commit()
+
+    subject = f"Referat: {meeting.title or 'Møde'}"
+    body_parts = [
+        f"Opsummering:\n{data.summary}",
+        "",
+        "Handlingspunkter:",
+        *[f"- {item}" for item in data.action_items],
+        "",
+        f"Fuld transskription:\n{data.full_text}",
+    ]
+    body = "\n".join(body_parts)[:2000]
+
+    return {
+        "ok": True,
+        "mailto": f"mailto:{','.join(data.recipients)}?subject={subject}&body={body}",
+    }
+
+
+# ── Finalize (kald fra nora-agent efter mødet) ────────────────────────────────
+
+class FinalizeResponse(BaseModel):
+    id: uuid.UUID
+    summary: str
+    action_items: list[str]
+    full_text: str
+
+
+@router.post("/{meeting_id}/finalize", response_model=FinalizeResponse)
+async def finalize_meeting(
+    meeting_id: uuid.UUID,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Generer referat fra akkumuleret live-transcript via Bedrock.
+
+    Kaldes af nora-agent når brugeren stopper optagelsen.
+    """
+    result = await db.execute(
+        select(MeetingNote).where(MeetingNote.id == meeting_id, MeetingNote.user_id == user.id)
+    )
+    meeting = result.scalar_one_or_none()
+    if not meeting:
+        raise HTTPException(status_code=404, detail="Møde ikke fundet")
+
+    if not meeting.transcript:
+        raise HTTPException(status_code=400, detail="Ingen transcript at generere referat fra")
+
+    from app.services.ai_engine import generate_meeting_summary
+    summary_data = await generate_meeting_summary(meeting.transcript)
+
+    meeting.summary = summary_data["summary"]
+    meeting.action_items = json.dumps(summary_data["action_items"], ensure_ascii=False)
+    await db.commit()
+    await db.refresh(meeting)
+
+    action_items_list = []
+    if meeting.action_items:
+        try:
+            action_items_list = json.loads(meeting.action_items)
+        except json.JSONDecodeError:
+            action_items_list = []
+
+    return FinalizeResponse(
+        id=meeting.id,
+        summary=meeting.summary or "",
+        action_items=action_items_list,
+        full_text=summary_data["full_text"],
+    )

@@ -20,6 +20,7 @@ class MailAccount(Base):
     token_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     sync_cursor: Mapped[str | None] = mapped_column(Text)
     is_active: Mapped[bool] = mapped_column(default=True)
+    nora_label_sync: Mapped[bool] = mapped_column(default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     user = relationship("User", back_populates="mail_accounts")

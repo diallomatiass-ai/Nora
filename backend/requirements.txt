@@ -27,7 +27,9 @@ httpx==0.27.2
 # AI
 chromadb==1.0.0
 ollama==0.3.3
-anthropic==0.40.0
+# AWS Bedrock (Claude i EU-Frankfurt — erstatter Anthropic direct API)
+boto3==1.35.0
+botocore==1.35.0
 
 # Utilities
 pydantic[email]==2.9.2
@@ -41,3 +43,7 @@ websockets==13.1
 
 # Stripe (betaling + abonnementer)
 stripe==11.3.0
+
+# Observability
+sentry-sdk[fastapi]==2.19.0
+structlog==24.4.0

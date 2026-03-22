@@ -73,25 +73,26 @@ async def seed():
         # ─────────────────────────────────────────────
         # EMAILS (14 stk)
         # ─────────────────────────────────────────────
+        # (from, name, subject, body, category, urgency, ai_summary, sentiment)
         emails_data = [
-            ("henrik@soerensenbyg.dk", "Henrik Sørensen", "Tilbud på badeværelsesrenovering", "Vi ønsker at renovere to badeværelser. Kan I give et tilbud? Vi er fleksible ift. tidspunkt.", "tilbud", "high"),
-            ("mette@privat.dk", "Mette Andersen", "Vandhane drypper", "Min vandhane i køkkenet drypper konstant. Hvornår kan I komme ud og kigge på det?", "booking", "medium"),
-            ("lars@nielsen-vvs.dk", "Lars Nielsen VVS", "Samarbejde om større projekt", "Vi er i gang med et større boligprojekt på 24 enheder og søger en underleverandør til VVS.", "tilbud", "high"),
-            ("tina@gmail.com", "Tina Christensen", "Klage: Varmtvandsbeholder virker ikke", "Den varmtvandsbeholder I installerede for 2 uger siden virker slet ikke. Jeg er meget utilfreds.", "reklamation", "high"),
-            ("bjorn@pedersen.dk", "Bjørn Pedersen", "Pris på fjernvarmetilslutning", "Hvad koster det at tilslutte vores ejendom til fjernvarmenettet?", "tilbud", "medium"),
-            ("sofia@sofia-design.dk", "Sofia Mahmoud", "Rørskade i kælder", "Vi har opdaget en rørskade i vores kælder. Der er allerede vand på gulvet. Haster!", "booking", "high"),
-            ("poul@rasmussen-toem.dk", "Poul Rasmussen", "Faktura #2024-0892", "Vedhæftet faktura for arbejdet udført i november. Betalingsfrist 30 dage.", "faktura", "low"),
-            ("info@boligstyring.dk", "Boligstyring ApS", "Årskontrakt — vedligeholdelse", "Vi administrerer 180 lejligheder og søger en fast VVS-partner til service og akutopkald.", "tilbud", "high"),
-            ("anne@koch.dk", "Anne-Marie Koch", "Aflysning af tid", "Jeg er desværre nødt til at aflyse den aftalte tid på torsdag. Kan vi rykke til næste uge?", "booking", "low"),
-            ("jacob@thorsen-el.dk", "Jacob Thorsen El", "Fælles tilbud — kombiprojekt", "Jeg har en kunde der ønsker nyt badeværelse. Lad os give et samlet tilbud — el + VVS.", "tilbud", "medium"),
-            ("camilla@brun.dk", "Camilla Brun", "Tak for god service!", "Vil bare sige tak for det hurtige og professionelle arbejde. Vi er meget tilfredse.", "andet", "low"),
-            ("spam@reklame.com", "Tilbud til dig!", "Vind en iPhone 15 — klik nu!", "Du er udvalgt til at vinde en iPhone. Klik her inden for 24 timer!!!", "spam", "low"),
-            ("leverandor@broen.dk", "Broen VVS Engros", "Prisliste 2026 + nye produkter", "Vedhæftet vores opdaterede prisliste for 2026. Kontakt os for mængderabat.", "leverandor", "low"),
-            ("intern@jensens-vvs.dk", "Kontor", "Ny ferieplan Q2 2026", "Hermed ferieplan for Q2. Husk at registrere ønsker inden 1. marts.", "intern", "low"),
+            ("henrik@soerensenbyg.dk", "Henrik Sørensen", "Tilbud på badeværelsesrenovering", "Vi ønsker at renovere to badeværelser. Kan I give et tilbud? Vi er fleksible ift. tidspunkt.", "tilbud", "high", "Kunde ønsker tilbud på renovering af to badeværelser.", "positive"),
+            ("mette@privat.dk", "Mette Andersen", "Vandhane drypper", "Min vandhane i køkkenet drypper konstant. Hvornår kan I komme ud og kigge på det?", "booking", "medium", "Privatperson med dryppende vandhane beder om besøg.", "neutral"),
+            ("lars@nielsen-vvs.dk", "Lars Nielsen VVS", "Samarbejde om større projekt", "Vi er i gang med et større boligprojekt på 24 enheder og søger en underleverandør til VVS.", "tilbud", "high", "VVS-firma søger underleverandør til boligprojekt med 24 enheder.", "positive"),
+            ("tina@gmail.com", "Tina Christensen", "Klage: Varmtvandsbeholder virker ikke", "Den varmtvandsbeholder I installerede for 2 uger siden virker slet ikke. Jeg er meget utilfreds.", "reklamation", "high", "Utilfreds kunde: nyinstalleret varmtvandsbeholder virker ikke.", "negative"),
+            ("bjorn@pedersen.dk", "Bjørn Pedersen", "Pris på fjernvarmetilslutning", "Hvad koster det at tilslutte vores ejendom til fjernvarmenettet?", "tilbud", "medium", "Kunde spørger til pris for fjernvarmetilslutning.", "neutral"),
+            ("sofia@sofia-design.dk", "Sofia Mahmoud", "Rørskade i kælder", "Vi har opdaget en rørskade i vores kælder. Der er allerede vand på gulvet. Haster!", "booking", "high", "Akut: rørskade med vand på gulvet i kælder — haster.", "negative"),
+            ("poul@rasmussen-toem.dk", "Poul Rasmussen", "Faktura #2024-0892", "Vedhæftet faktura for arbejdet udført i november. Betalingsfrist 30 dage.", "faktura", "low", "Faktura #2024-0892 for novemberarbejde med 30 dages frist.", "neutral"),
+            ("info@boligstyring.dk", "Boligstyring ApS", "Årskontrakt — vedligeholdelse", "Vi administrerer 180 lejligheder og søger en fast VVS-partner til service og akutopkald.", "tilbud", "high", "Ejendomsadministrator søger fast VVS-partner til 180 lejligheder.", "positive"),
+            ("anne@koch.dk", "Anne-Marie Koch", "Aflysning af tid", "Jeg er desværre nødt til at aflyse den aftalte tid på torsdag. Kan vi rykke til næste uge?", "booking", "low", "Kunde aflyser torsdagstid og beder om ny aftale næste uge.", "neutral"),
+            ("jacob@thorsen-el.dk", "Jacob Thorsen El", "Fælles tilbud — kombiprojekt", "Jeg har en kunde der ønsker nyt badeværelse. Lad os give et samlet tilbud — el + VVS.", "tilbud", "medium", "El-firma foreslår samlet tilbud til kunde på nyt badeværelse.", "positive"),
+            ("camilla@brun.dk", "Camilla Brun", "Tak for god service!", "Vil bare sige tak for det hurtige og professionelle arbejde. Vi er meget tilfredse.", "andet", "low", "Kunde udtrykker stor tilfredshed med udført arbejde.", "positive"),
+            ("spam@reklame.com", "Tilbud til dig!", "Vind en iPhone 15 — klik nu!", "Du er udvalgt til at vinde en iPhone. Klik her inden for 24 timer!!!", "spam", "low", "Spam: falsk konkurrencemail om iPhone-gevinst.", "neutral"),
+            ("leverandor@broen.dk", "Broen VVS Engros", "Prisliste 2026 + nye produkter", "Vedhæftet vores opdaterede prisliste for 2026. Kontakt os for mængderabat.", "leverandor", "low", "Leverandør sender opdateret prisliste 2026 med mængderabat.", "neutral"),
+            ("intern@jensens-vvs.dk", "Kontor", "Ny ferieplan Q2 2026", "Hermed ferieplan for Q2. Husk at registrere ønsker inden 1. marts.", "intern", "low", "Intern ferieplan for Q2 — registrér ønsker inden 1. marts.", "neutral"),
         ]
 
         email_objs = []
-        for i, (from_addr, from_name, subject, body, category, urgency) in enumerate(emails_data):
+        for i, (from_addr, from_name, subject, body, category, urgency, ai_summary, sentiment) in enumerate(emails_data):
             email = EmailMessage(
                 id=uuid.uuid4(),
                 account_id=account.id,
@@ -104,6 +105,8 @@ async def seed():
                 received_at=now - timedelta(hours=i * 4 + 1),
                 category=category,
                 urgency=urgency,
+                ai_summary=ai_summary,
+                sentiment=sentiment,
                 processed=True,
                 is_read=i > 6,
             )

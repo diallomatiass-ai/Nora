@@ -37,16 +37,16 @@ PLAN_LABELS = {
 
 PLAN_PRICES_DKK = {
     "free":     0,
-    "starter":  499,
-    "pro":      999,
-    "business": 2499,
+    "starter":  199,
+    "pro":      399,
+    "business": 999,
 }
 
 PLAN_FEATURES = {
     "free": ["1 mailkonto", "50 AI-svar/md", "Basis klassificering"],
-    "starter": ["1 bruger", "1 mailkonto", "500 AI-svar/md", "Skabeloner", "Videnbase"],
-    "pro": ["5 brugere", "3 mailkonti", "2.000 AI-svar/md", "AI Secretary", "Kalender-sync"],
-    "business": ["20 brugere", "10 mailkonti", "Ubegrænsede svar", "Prioriteret support", "API-adgang"],
+    "starter": ["1 indbakke og kalender", "AI-svarforslag i din tone", "Møde-notetaker", "Data processeres i EU (Frankfurt)", "E-mail support"],
+    "pro": ["Flere indbakker og kalendre", "AI-svarforslag i din tone", "Møde-notetaker", "Skabeloner og videnbase", "Flersproget (da/sv/no/en)", "Data processeres i EU (Frankfurt)", "Chat support"],
+    "business": ["Alt i Pro", "Dedikeret onboarding", "SLA 99,9%", "GDPR DPA-aftale", "API-adgang", "Telefon support"],
 }
 
 

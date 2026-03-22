@@ -24,7 +24,7 @@ from app.models.calendar_event import CalendarEvent
 from app.utils.auth import get_current_user
 from app.models.user import User
 from app.services.mail_gmail import send_reply
-from app.services.ai_engine import generate_reply, _call_ollama_generate as _call_llm
+from app.services.ai_engine import generate_reply, _call_bedrock_async as _call_llm
 from app.services.calendar_service import get_calendar_service
 
 logger = logging.getLogger(__name__)

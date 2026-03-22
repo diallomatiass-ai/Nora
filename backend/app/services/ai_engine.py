@@ -1,4 +1,8 @@
-"""Claude API-based AI engine for email classification and reply generation."""
+"""AWS Bedrock-based AI engine for email classification and reply generation.
+
+Al AI-processering sker via AWS Bedrock i eu-central-1 (Frankfurt).
+Data forlader aldrig EU — Anthropic ser aldrig indholdet direkte.
+"""
 
 from __future__ import annotations
 
@@ -7,9 +11,9 @@ import json
 import logging
 from typing import TYPE_CHECKING
 
+import boto3
 import httpx
-import anthropic
-from sqlalchemy import select
+from botocore.exceptions import ClientError
 
 from app.config import settings
 from app.services.prompt_builder import build_classification_prompt, build_reply_prompt
@@ -17,24 +21,107 @@ from app.services.vector_store import search_knowledge, search_similar_replies, 
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
+    from sqlalchemy import select
 
     from app.models.email_message import EmailMessage
     from app.models.user import User
 
 logger = logging.getLogger(__name__)
 
-# Async Anthropic klient — direkte async, ingen asyncio.to_thread wrapper nødvendig
-_anthropic_client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
-
 # Retry-konfiguration
 _MAX_RETRIES = 3
 _RETRY_BASE_DELAY = 1.0  # sekunder
 
 
-async def get_embedding(text: str) -> list[float]:
-    """Get an embedding vector from the Ollama nomic-embed-text model.
+def _get_bedrock_client():
+    """Opret boto3 Bedrock Runtime klient med EU-region."""
+    kwargs = {
+        "service_name": "bedrock-runtime",
+        "region_name": settings.aws_region,
+    }
+    # Hvis eksplicitte credentials er sat i .env — ellers bruges IAM role/~/.aws/credentials
+    if settings.aws_access_key_id and settings.aws_secret_access_key:
+        kwargs["aws_access_key_id"] = settings.aws_access_key_id
+        kwargs["aws_secret_access_key"] = settings.aws_secret_access_key
+    return boto3.client(**kwargs)
 
-    Anthropic har ikke et embedding-API — Ollama bruges stadig til embeddings.
+
+def _invoke_bedrock_sync(model_id: str, prompt: str, max_tokens: int) -> str:
+    """Kald AWS Bedrock synkront (køres i thread via asyncio.to_thread)."""
+    client = _get_bedrock_client()
+
+    body = json.dumps({
+        "anthropic_version": "bedrock-2023-05-31",
+        "max_tokens": max_tokens,
+        "messages": [{"role": "user", "content": prompt}],
+    })
+
+    response = client.invoke_model(
+        modelId=model_id,
+        body=body,
+        accept="application/json",
+        contentType="application/json",
+    )
+
+    response_body = json.loads(response["body"].read())
+    return response_body["content"][0]["text"]
+
+
+async def _call_bedrock_async(
+    prompt: str, model_id: str | None = None, max_tokens: int = 1024
+) -> str:
+    """Kald AWS Bedrock asynkront med exponential backoff retry.
+
+    boto3 har ikke native async — vi kører det i en thread pool.
+    """
+    chosen_model = model_id or settings.bedrock_model
+    last_exc: Exception | None = None
+
+    for attempt in range(_MAX_RETRIES):
+        try:
+            result = await asyncio.to_thread(
+                _invoke_bedrock_sync, chosen_model, prompt, max_tokens
+            )
+            return result
+
+        except ClientError as exc:
+            error_code = exc.response["Error"]["Code"]
+
+            if error_code == "ThrottlingException":
+                last_exc = exc
+                delay = _RETRY_BASE_DELAY * (2 ** attempt)
+                logger.warning(
+                    "Bedrock throttling (forsøg %d/%d) — venter %.1fs",
+                    attempt + 1, _MAX_RETRIES, delay,
+                )
+                await asyncio.sleep(delay)
+
+            elif error_code in ("ServiceUnavailableException", "InternalServerException"):
+                last_exc = exc
+                delay = _RETRY_BASE_DELAY * (2 ** attempt)
+                logger.warning(
+                    "Bedrock server fejl %s (forsøg %d/%d) — venter %.1fs",
+                    error_code, attempt + 1, _MAX_RETRIES, delay,
+                )
+                await asyncio.sleep(delay)
+
+            else:
+                # AccessDeniedException, ValidationException etc. — kast videre
+                raise
+
+        except Exception:
+            raise
+
+    raise RuntimeError(
+        f"Bedrock fejlede efter {_MAX_RETRIES} forsøg: {last_exc}"
+    ) from last_exc
+
+
+async def get_embedding(text: str) -> list[float]:
+    """Hent embedding-vektor fra Ollama nomic-embed-text.
+
+    AWS Bedrock har ikke et embedding-API til Titan i EU endnu —
+    Ollama kører lokalt og sender ingen data nogen steder.
     """
     url = f"{settings.ollama_base_url}/api/embeddings"
     payload = {
@@ -53,69 +140,18 @@ async def get_embedding(text: str) -> list[float]:
         return []
 
 
-async def _call_claude_async(
-    prompt: str, model: str | None = None, max_tokens: int = 1024
-) -> str:
-    """Kald Claude API asynkront med exponential backoff retry.
-
-    Håndterer automatisk:
-      - 429 RateLimitError  → venter og prøver igen
-      - 503 APIStatusError  → venter og prøver igen
-      - Andre APIError      → kaster videre efter max retries
-    """
-    chosen_model = model or settings.claude_model
-    last_exc: Exception | None = None
-
-    for attempt in range(_MAX_RETRIES):
-        try:
-            message = await _anthropic_client.messages.create(
-                model=chosen_model,
-                max_tokens=max_tokens,
-                messages=[{"role": "user", "content": prompt}],
-            )
-            return message.content[0].text
-
-        except anthropic.RateLimitError as exc:
-            last_exc = exc
-            delay = _RETRY_BASE_DELAY * (2 ** attempt)
-            logger.warning(
-                "Claude API 429 rate limit (forsøg %d/%d) — venter %.1fs",
-                attempt + 1, _MAX_RETRIES, delay,
-            )
-            await asyncio.sleep(delay)
-
-        except anthropic.APIStatusError as exc:
-            if exc.status_code >= 500:
-                last_exc = exc
-                delay = _RETRY_BASE_DELAY * (2 ** attempt)
-                logger.warning(
-                    "Claude API %d server fejl (forsøg %d/%d) — venter %.1fs",
-                    exc.status_code, attempt + 1, _MAX_RETRIES, delay,
-                )
-                await asyncio.sleep(delay)
-            else:
-                raise
-
-        except anthropic.APIError:
-            raise
-
-    raise RuntimeError(
-        f"Claude API fejlede efter {_MAX_RETRIES} forsøg: {last_exc}"
-    ) from last_exc
-
-
 async def classify_email(subject: str, body: str) -> dict:
-    """Klassificér en email med Claude Haiku (hurtig + billig)."""
+    """Klassificér en email med Claude Haiku via Bedrock (hurtig + billig)."""
     prompt = build_classification_prompt(subject, body)
 
     try:
-        raw_response = await _call_claude_async(
+        raw_response = await _call_bedrock_async(
             prompt,
-            model=settings.claude_fast_model,
+            model_id=settings.bedrock_fast_model,
             max_tokens=256,
         )
     except Exception as exc:
-        logger.error("Claude API fejl under klassificering: %s", exc)
+        logger.error("Bedrock fejl under klassificering: %s", exc)
         return _default_classification()
 
     return _parse_classification_response(raw_response)
@@ -137,7 +173,7 @@ def _parse_classification_response(raw: str) -> dict:
         end = text.rfind("}")
         if start != -1 and end != -1 and end > start:
             try:
-                data = json.loads(text[start : end + 1])
+                data = json.loads(text[start: end + 1])
             except json.JSONDecodeError:
                 logger.warning("Kunne ikke parse klassificerings-JSON: %s", text[:200])
                 return _default_classification()
@@ -146,10 +182,11 @@ def _parse_classification_response(raw: str) -> dict:
             return _default_classification()
 
     valid_categories = {
-        "tilbud", "booking", "reklamation", "faktura", "leverandor", "intern", "spam", "andet",
-        "inquiry", "complaint", "order", "support", "other",
+        "tilbud", "booking", "reklamation", "faktura", "leverandor", "intern", "support", "spam", "andet",
+        "inquiry", "complaint", "order", "other",
     }
     valid_urgencies = {"high", "medium", "low"}
+    valid_sentiments = {"positive", "neutral", "negative"}
 
     category = str(data.get("category", "andet")).lower()
     if category not in valid_categories:
@@ -167,11 +204,19 @@ def _parse_classification_response(raw: str) -> dict:
     except (TypeError, ValueError):
         confidence = 0.5
 
+    ai_summary = str(data.get("ai_summary", ""))[:200] or None
+
+    sentiment = str(data.get("sentiment", "neutral")).lower()
+    if sentiment not in valid_sentiments:
+        sentiment = "neutral"
+
     return {
         "category": category,
         "urgency": urgency,
         "topic": topic,
         "confidence": confidence,
+        "ai_summary": ai_summary,
+        "sentiment": sentiment,
     }
 
 
@@ -181,13 +226,18 @@ def _default_classification() -> dict:
         "urgency": "medium",
         "topic": "",
         "confidence": 0.0,
+        "ai_summary": None,
+        "sentiment": "neutral",
     }
 
 
 async def generate_reply(
-    email: EmailMessage, user: User, db: AsyncSession
+    email: "EmailMessage", user: "User", db: "AsyncSession"
 ) -> str:
-    """Orkestrér fuld svargenererings-pipeline med Claude Sonnet."""
+    """Orkestrér fuld svargenererings-pipeline med Claude Sonnet via Bedrock."""
+    from sqlalchemy import select
+    from app.models.template import Template
+
     user_id_str = str(user.id)
     query_text = f"{email.subject or ''} {email.body_text or ''}"
 
@@ -215,9 +265,7 @@ async def generate_reply(
         logger.warning("Style-samples søgning fejlede: %s", exc)
         style_samples = []
 
-    from app.models.template import Template
-
-    templates: list[Template] = []
+    templates = []
     try:
         stmt = select(Template).where(Template.user_id == user.id)
         if email.category:
@@ -238,19 +286,76 @@ async def generate_reply(
     )
 
     try:
-        reply_text = await _call_claude_async(
+        reply_text = await _call_bedrock_async(
             prompt,
-            model=settings.claude_model,
+            model_id=settings.bedrock_model,
             max_tokens=768,
         )
     except Exception as exc:
-        logger.error("Claude API fejl under svargenerering: %s", exc)
+        logger.error("Bedrock fejl under svargenerering: %s", exc)
         raise RuntimeError(f"Kunne ikke generere svar: {exc}") from exc
 
     return reply_text.strip()
 
 
+async def generate_meeting_summary(transcript: str) -> dict:
+    """Generer mødereferat, action items og opsummering fra transcript.
+
+    Returnerer: {summary, action_items: [str], full_text: str}
+    """
+    prompt = f"""Du er en professionel mødesekretær. Analyser denne mødetranscript og returner JSON.
+
+TRANSCRIPT:
+{transcript}
+
+Returner KUN valid JSON i dette format:
+{{
+  "summary": "2-3 sætninger der opsummerer mødet",
+  "action_items": ["Action item 1", "Action item 2"],
+  "full_text": "Komplet formateret referat på dansk"
+}}
+
+Svar på det sprog mødet primært foregik på (dansk eller engelsk)."""
+
+    try:
+        raw = await _call_bedrock_async(prompt, model_id=settings.bedrock_model, max_tokens=1024)
+        text = raw.strip()
+        if text.startswith("```"):
+            lines = [l for l in text.split("\n") if not l.strip().startswith("```")]
+            text = "\n".join(lines).strip()
+        data = json.loads(text)
+        return {
+            "summary": data.get("summary", ""),
+            "action_items": data.get("action_items", []),
+            "full_text": data.get("full_text", transcript),
+        }
+    except Exception as exc:
+        logger.error("Bedrock fejl under mødereferat: %s", exc)
+        return {"summary": "", "action_items": [], "full_text": transcript}
+
+
+async def refine_suggestion(current_text: str, instruction: str) -> str:
+    """Forfin et AI-svarforslag baseret på brugerens instruktion."""
+    prompt = f"""Du er en professionel emailassistent. Opdater dette svarforslag baseret på instruktionen.
+
+NUVÆRENDE FORSLAG:
+{current_text}
+
+INSTRUKTION FRA BRUGEREN:
+{instruction}
+
+Returner KUN det opdaterede svarforslag — ingen forklaring, ingen ekstra tekst."""
+
+    try:
+        return await _call_bedrock_async(
+            prompt, model_id=settings.bedrock_model, max_tokens=512
+        )
+    except Exception as exc:
+        logger.error("Bedrock fejl under raffinering: %s", exc)
+        return current_text
+
+
 # Bagudkompatibilitet — bruges af chat.py
 async def _call_ollama_generate(prompt: str) -> str:
-    """Alias til _call_claude_async for bagudkompatibilitet med chat.py."""
-    return await _call_claude_async(prompt, max_tokens=1024)
+    """Alias til _call_bedrock_async for bagudkompatibilitet."""
+    return await _call_bedrock_async(prompt, max_tokens=1024)

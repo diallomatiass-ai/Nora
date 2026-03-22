@@ -23,6 +23,12 @@ class EmailMessageResponse(BaseModel):
     urgency: str | None
     topic: str | None
     confidence: float | None
+    ai_summary: str | None = None
+    sentiment: str | None = None
+    is_trashed: bool = False
+    is_starred: bool = False
+    folder_id: str | None = None
+    folder_name: str | None = None
     processed: bool
     created_at: datetime
     suggestions: list[AiSuggestionResponse] = []
@@ -42,6 +48,10 @@ class EmailListResponse(BaseModel):
     category: str | None
     urgency: str | None
     topic: str | None
+    ai_summary: str | None = None
+    sentiment: str | None = None
+    is_starred: bool = False
+    is_trashed: bool = False
     has_suggestion: bool = False
 
     model_config = {"from_attributes": True}

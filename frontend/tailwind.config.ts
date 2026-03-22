@@ -9,21 +9,22 @@ const config: Config = {
     extend: {
       colors: {
         dark: {
-          bg: '#0D1B3E',
-          surface: '#162249',
-          'surface-hover': '#1e2d5e',
-          border: '#1e2d5e',
+          bg: '#0A1829',
+          surface: '#122B4A',
+          'surface-hover': '#1a3660',
+          border: '#1a3660',
         },
         accent: {
-          DEFAULT: '#42D1B9',
-          hover: '#56DEC8',
-          muted: 'rgba(66, 209, 185, 0.15)',
+          DEFAULT: '#0CA9BA',
+          hover: '#3DBFCC',
+          muted: 'rgba(12, 169, 186, 0.15)',
         },
         brand: {
-          navy: '#162249',
-          'navy-hover': '#1e2d6b',
-          teal: '#42D1B9',
-          'teal-dark': '#2ABBA4',
+          navy: '#122B4A',
+          'navy-hover': '#1a3660',
+          teal: '#0CA9BA',
+          'teal-dark': '#0A95A6',
+          'teal-light': '#3DBFCC',
         },
       },
       keyframes: {
@@ -36,8 +37,8 @@ const config: Config = {
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
         pulse_glow: {
-          '0%, 100%': { boxShadow: '0 0 4px rgba(66, 209, 185, 0.4)' },
-          '50%': { boxShadow: '0 0 12px rgba(66, 209, 185, 0.7)' },
+          '0%, 100%': { boxShadow: '0 0 4px rgba(12, 169, 186, 0.4)' },
+          '50%': { boxShadow: '0 0 12px rgba(12, 169, 186, 0.7)' },
         },
       },
       animation: {

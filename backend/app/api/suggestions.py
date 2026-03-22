@@ -219,7 +219,7 @@ async def refine_suggestion(
     email_result = await db.execute(select(EmailMessage).where(EmailMessage.id == suggestion.email_id))
     email = email_result.scalar_one()
 
-    from app.services.ai_engine import _call_ollama_generate
+    from app.services.ai_engine import _call_bedrock_async
 
     prompt = f"""Du er en e-mail assistent. Brugeren vil have dig til at ændre et svarudkast.
 
@@ -240,5 +240,5 @@ Emne: {email.subject or '(intet emne)'}
 
 ## Nyt svarudkast:"""
 
-    refined = await _call_ollama_generate(prompt)
+    refined = await _call_bedrock_async(prompt)
     return RefineResponse(refined_text=refined.strip())

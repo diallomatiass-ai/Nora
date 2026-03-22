@@ -83,6 +83,8 @@ def process_single_email(email_id: str):
                 email.urgency = classification.get("urgency")
                 email.topic = classification.get("topic")
                 email.confidence = classification.get("confidence")
+                email.ai_summary = classification.get("ai_summary")
+                email.sentiment = classification.get("sentiment")
 
                 # Get user for reply generation
                 account_result = await db.execute(
@@ -102,6 +104,17 @@ def process_single_email(email_id: str):
                         suggested_text=reply_text,
                     )
                     db.add(suggestion)
+
+                # Opt-in: spejl Nora-kategori som Gmail-label
+                if email.category and account.provider == "gmail" and getattr(account, 'nora_label_sync', False):
+                    try:
+                        from app.services.mail_gmail import apply_nora_label
+                        label_id = await apply_nora_label(account, db, email.provider_id, email.category)
+                        if label_id:
+                            email.nora_label_id = label_id
+                    except Exception as exc:
+                        import logging as _logging
+                        _logging.getLogger(__name__).warning("Nora label sync fejl: %s", exc)
 
                 email.processed = True
                 await db.commit()

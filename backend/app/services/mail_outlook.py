@@ -184,3 +184,68 @@ async def send_reply(
             "Outlook send failed (%d): %s", resp.status_code, resp.text
         )
         return False
+
+
+async def trash_message(account: MailAccount, db: AsyncSession, message_id: str) -> bool:
+    """Flyt email til Outlook Deleted Items. Ejeren valgte dette eksplicit."""
+    token = await get_valid_token(account, db)
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        resp = await client.post(
+            f"{GRAPH_API}/me/messages/{message_id}/move",
+            headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+            json={"destinationId": "deleteditems"},
+        )
+        if resp.is_success:
+            logger.info("Outlook: message %s moved to deleted items by user", message_id)
+            return True
+        logger.error("Outlook trash failed (%d): %s", resp.status_code, resp.text)
+        return False
+
+
+async def delete_message_permanent(account: MailAccount, db: AsyncSession, message_id: str) -> bool:
+    """Slet email permanent via Outlook. Ejeren valgte dette eksplicit efter bekræftelse."""
+    token = await get_valid_token(account, db)
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        resp = await client.delete(
+            f"{GRAPH_API}/me/messages/{message_id}",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        if resp.is_success or resp.status_code == 204:
+            logger.info("Outlook: message %s permanently deleted by user", message_id)
+            return True
+        logger.error("Outlook delete failed (%d): %s", resp.status_code, resp.text)
+        return False
+
+
+async def move_message(account: MailAccount, db: AsyncSession, message_id: str, folder_id: str) -> bool:
+    """Flyt email til en specifik Outlook-mappe. Ejeren valgte dette eksplicit.
+
+    Kendte folder_ids: inbox, drafts, sentitems, deleteditems, junkemail,
+    eller et bruger-defineret mappe-id fra Outlook.
+    """
+    token = await get_valid_token(account, db)
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        resp = await client.post(
+            f"{GRAPH_API}/me/messages/{message_id}/move",
+            headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+            json={"destinationId": folder_id},
+        )
+        if resp.is_success:
+            logger.info("Outlook: message %s moved to %s by user", message_id, folder_id)
+            return True
+        logger.error("Outlook move failed (%d): %s", resp.status_code, resp.text)
+        return False
+
+
+async def list_folders(account: MailAccount, db: AsyncSession) -> list[dict]:
+    """Hent brugerens Outlook-mapper til brug i move-dialog."""
+    token = await get_valid_token(account, db)
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        resp = await client.get(
+            f"{GRAPH_API}/me/mailFolders",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        if resp.is_success:
+            folders = resp.json().get("value", [])
+            return [{"id": f["id"], "name": f["displayName"]} for f in folders]
+        return []

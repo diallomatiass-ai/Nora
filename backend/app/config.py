@@ -30,12 +30,16 @@ class Settings(BaseSettings):
     outlook_tenant_id: str = "common"
     outlook_redirect_uri: str = ""
 
-    # Claude API (Anthropic)
-    anthropic_api_key: str = ""
-    claude_model: str = "claude-opus-4-6"
-    claude_fast_model: str = "claude-haiku-4-5-20251001"
+    # AWS Bedrock (Claude i EU — Frankfurt, eu-central-1)
+    # Data forlader aldrig EU. Anthropic ser aldrig indholdet direkte.
+    aws_access_key_id: str = ""
+    aws_secret_access_key: str = ""
+    aws_region: str = "eu-central-1"
+    # Cross-region inference profile IDs (eu. prefix = EU data residency garanteret)
+    bedrock_model: str = "eu.anthropic.claude-3-5-sonnet-20241022-v2:0"
+    bedrock_fast_model: str = "eu.anthropic.claude-3-haiku-20240307-v1:0"
 
-    # Ollama (kun embeddings)
+    # Ollama (kun embeddings — kører 100% lokalt, ingen data sendes nogen steder)
     ollama_base_url: str = "http://localhost:11434"
     ollama_embed_model: str = "nomic-embed-text"
 
@@ -48,6 +52,12 @@ class Settings(BaseSettings):
 
     # Mail sync
     mail_sync_interval_seconds: int = 60
+
+    # Observability
+    sentry_dsn: str = ""
+    sentry_environment: str = "development"
+    sentry_traces_sample_rate: float = 0.1  # 10% af requests trackes i produktion
+    log_level: str = "INFO"
 
     # Stripe
     stripe_secret_key: str = ""

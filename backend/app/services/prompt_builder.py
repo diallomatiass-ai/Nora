@@ -14,10 +14,12 @@ def build_classification_prompt(email_subject: str, email_body: str) -> str:
     """Build a prompt that asks the LLM to classify an incoming email.
 
     The LLM should return a JSON object with:
-      - category: inquiry | complaint | order | support | spam | other
+      - category: tilbud | booking | faktura | reklamation | intern | leverandor | support | spam | andet
       - urgency: high | medium | low
       - topic: short description (max 10 words)
       - confidence: float between 0 and 1
+      - ai_summary: one-line Danish summary (max 20 words)
+      - sentiment: positive | neutral | negative
 
     Args:
         email_subject: The email subject line.
@@ -26,21 +28,24 @@ def build_classification_prompt(email_subject: str, email_body: str) -> str:
     Returns:
         A fully-formed classification prompt string.
     """
-    return f"""You are an email classification assistant. Analyze the following email and return a JSON object with exactly these four fields:
+    body_preview = (email_body or "")[:1500]
+    return f"""Du er en dansk email-klassificeringsassistent. Analyser denne email og returner et JSON-objekt med præcis disse seks felter:
 
-- "category": one of "inquiry", "complaint", "order", "support", "spam", "other"
-- "urgency": one of "high", "medium", "low"
-- "topic": a short description of the email topic (max 10 words)
-- "confidence": a float between 0.0 and 1.0 indicating your confidence
+- "category": én af "tilbud", "booking", "faktura", "reklamation", "intern", "leverandor", "support", "spam", "andet"
+- "urgency": én af "high", "medium", "low"
+- "topic": kort beskrivelse af emnet (max 10 ord, dansk)
+- "confidence": et tal mellem 0.0 og 1.0 der angiver din sikkerhed
+- "ai_summary": én dansk sætning (max 20 ord) der opsummerer hvad emailen handler om
+- "sentiment": én af "positive", "neutral", "negative" — afsenderens stemning
 
-Return ONLY valid JSON. No explanations, no markdown formatting, no code fences.
+Returner KUN valid JSON. Ingen forklaringer, ingen markdown, ingen kodeblokke.
 
-Email subject: {email_subject}
+Email emne: {email_subject}
 
-Email body:
-{email_body}
+Email indhold:
+{body_preview}
 
-JSON response:"""
+JSON svar:"""
 
 
 async def build_reply_prompt(

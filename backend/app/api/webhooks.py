@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy import select
@@ -211,13 +213,31 @@ async def list_accounts(
     return result.scalars().all()
 
 
+@router.patch("/accounts/{account_id}")
+async def update_account(
+    account_id: UUID,
+    data: dict,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(MailAccount).where(MailAccount.id == account_id, MailAccount.user_id == user.id)
+    )
+    account = result.scalar_one_or_none()
+    if not account:
+        raise HTTPException(status_code=404, detail="Konto ikke fundet")
+    if "nora_label_sync" in data:
+        account.nora_label_sync = bool(data["nora_label_sync"])
+    await db.commit()
+    return {"ok": True}
+
+
 @router.delete("/accounts/{account_id}", status_code=204)
 async def disconnect_account(
     account_id: str,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    from uuid import UUID
     result = await db.execute(
         select(MailAccount).where(MailAccount.id == UUID(account_id), MailAccount.user_id == user.id)
     )

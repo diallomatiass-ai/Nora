@@ -41,12 +41,7 @@ services:
       ANONYMIZED_TELEMETRY: "false"
       CHROMA_SERVER_HTTP_PORT: "8002"
 
-  ollama:
-    image: ollama/ollama:latest
-    restart: unless-stopped
-    network_mode: host
-    volumes:
-      - ollama_data:/root/.ollama
+  # ollama er fjernet — bruger host Ollama på port 11434 (nomic-embed-text)
 
   backend:
     build:
@@ -105,6 +100,9 @@ services:
     network_mode: host
     environment:
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
     depends_on:
       - backend
 

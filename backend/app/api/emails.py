@@ -104,7 +104,7 @@ async def generate_compose_draft(
     db: AsyncSession = Depends(get_db),
 ):
     """Use AI to draft a new email based on instructions."""
-    from app.services.ai_engine import _call_ollama_generate
+    from app.services.ai_engine import _call_bedrock_async as _call_ollama_generate
     from sqlalchemy import select
     from app.models.template import Template
     from app.models.knowledge_base import KnowledgeBase
@@ -353,6 +353,148 @@ async def get_email_thread(
     return response
 
 
+@router.get("/{email_id}/thread-summary")
+@limiter.limit("20/minute")
+async def get_thread_summary(
+    request: Request,
+    email_id: UUID,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Generer en AI-opsummering af hele email-tråden."""
+    account_ids = await _get_account_ids(user, db)
+
+    result = await db.execute(
+        select(EmailMessage).where(
+            EmailMessage.id == email_id,
+            EmailMessage.account_id.in_(account_ids),
+        )
+    )
+    email = result.scalar_one_or_none()
+    if not email:
+        raise HTTPException(status_code=404, detail="Email ikke fundet")
+
+    # Hent tråden
+    thread_emails = []
+    if email.thread_id:
+        thread_result = await db.execute(
+            select(EmailMessage)
+            .where(
+                EmailMessage.thread_id == email.thread_id,
+                EmailMessage.account_id.in_(account_ids),
+            )
+            .order_by(EmailMessage.received_at.asc())
+        )
+        thread_emails = thread_result.scalars().all()
+
+    if not thread_emails:
+        thread_emails = [email]
+
+    # Byg tråd-tekst til AI
+    thread_text = ""
+    for i, e in enumerate(thread_emails, 1):
+        sender = e.from_name or e.from_address
+        date_str = e.received_at.strftime("%d/%m kl. %H:%M") if e.received_at else ""
+        thread_text += f"\n--- Besked {i} ({sender}, {date_str}) ---\n"
+        thread_text += (e.body_text or "")[:800]
+
+    from app.services.ai_engine import _call_bedrock_async
+    prompt = f"""Du er en email-assistent. Opsummer denne email-tråd på dansk.
+
+TRÅD ({len(thread_emails)} beskeder):
+{thread_text}
+
+Returner KUN valid JSON:
+{{
+  "summary": "2-3 sætninger der forklarer hvad tråden handler om og hvad status er",
+  "key_points": ["punkt 1", "punkt 2"],
+  "action_needed": true/false,
+  "action": "hvad skal der gøres (eller null)"
+}}"""
+
+    try:
+        raw = await _call_bedrock_async(prompt, max_tokens=512)
+        text = raw.strip()
+        if text.startswith("```"):
+            lines = [l for l in text.split("\n") if not l.strip().startswith("```")]
+            text = "\n".join(lines).strip()
+        import json
+        data = json.loads(text)
+        return {
+            "thread_length": len(thread_emails),
+            "summary": data.get("summary", ""),
+            "key_points": data.get("key_points", []),
+            "action_needed": data.get("action_needed", False),
+            "action": data.get("action"),
+        }
+    except Exception as exc:
+        logger.error("Tråd-opsummering fejlede: %s", exc)
+        raise HTTPException(status_code=500, detail="Kunne ikke generere tråd-opsummering")
+
+
+@router.get("/{email_id}/customer-history")
+async def get_email_customer_history(
+    email_id: UUID,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Returnér kundehistorik for afsenderens email-adresse."""
+    from sqlalchemy import text
+
+    # Find email
+    accounts_result = await db.execute(
+        select(MailAccount.id).where(MailAccount.user_id == user.id)
+    )
+    account_ids = [row[0] for row in accounts_result.all()]
+    result = await db.execute(
+        select(EmailMessage.from_address, EmailMessage.from_name)
+        .where(EmailMessage.id == email_id, EmailMessage.account_id.in_(account_ids))
+    )
+    row = result.first()
+    if not row:
+        return {"customer": None, "emails": [], "action_items": []}
+
+    from_address = row.from_address
+
+    # Find matchende kunde
+    try:
+        cust = await db.execute(
+            text("SELECT id, name, status, estimated_value FROM customers WHERE user_id = :uid AND email ILIKE :email LIMIT 1"),
+            {"uid": user.id, "email": from_address}
+        )
+        customer_row = cust.fetchone()
+        customer = {
+            "id": str(customer_row.id),
+            "name": customer_row.name,
+            "status": customer_row.status,
+            "estimated_value": float(customer_row.estimated_value) if customer_row.estimated_value else None,
+        } if customer_row else None
+    except Exception:
+        customer = None
+
+    # Tidligere emails fra samme afsender
+    prev_emails = await db.execute(
+        select(EmailMessage.id, EmailMessage.subject, EmailMessage.received_at, EmailMessage.category)
+        .where(
+            EmailMessage.from_address == from_address,
+            EmailMessage.account_id.in_(account_ids),
+            EmailMessage.id != email_id,
+        )
+        .order_by(EmailMessage.received_at.desc())
+        .limit(10)
+    )
+    emails = [
+        {
+            "id": str(e.id),
+            "subject": e.subject,
+            "received_at": e.received_at.isoformat() if e.received_at else None,
+            "category": e.category,
+        }
+        for e in prev_emails.all()
+    ]
+
+    return {"customer": customer, "emails": emails, "action_items": []}
+
 
 @router.get("/{email_id}", response_model=EmailMessageResponse)
 async def get_email(
@@ -483,12 +625,21 @@ async def dashboard_summary(
         ],
     }
 
+    # Emails per kategori
+    cat_result = await db.execute(
+        select(EmailMessage.category, func.count().label("cnt"))
+        .where(EmailMessage.account_id.in_(account_ids), EmailMessage.category.isnot(None))
+        .group_by(EmailMessage.category)
+    )
+    by_category = {row.category: row.cnt for row in cat_result.all()}
+
     return {
         "user_name": user.name,
         "unread": unread,
         "high_priority": high_priority,
         "pending_suggestions": pending_sug,
         "week_total": week_total,
+        "by_category": by_category,
         "onboarding": onboarding,
         "top_urgent": [
             {
@@ -498,6 +649,8 @@ async def dashboard_summary(
                 "from_name": e.from_name,
                 "urgency": e.urgency,
                 "category": e.category,
+                "ai_summary": e.ai_summary,
+                "sentiment": e.sentiment,
                 "received_at": e.received_at.isoformat() if e.received_at else None,
             }
             for e in top_emails
@@ -539,3 +692,217 @@ async def generate_suggestion(
     await db.commit()
     await db.refresh(suggestion)
     return suggestion
+
+
+# ── Ejer-handlinger: slet, flyt, papirkurv ───────────────────────────────────
+# Al sletning og flytning kræver eksplicit bruger-handling.
+# AI initierer ALDRIG disse handlinger.
+
+class TrashRequest(BaseModel):
+    permanent: bool = False  # False = papirkurv (kan genoprettes). True KUN tilladt for emails i papirkurven.
+
+
+class MoveRequest(BaseModel):
+    folder_id: str  # Gmail label-id eller Outlook folder-id
+    folder_name: str | None = None  # Til display i audit log
+
+
+async def _get_email_and_account(email_id: UUID, user: User, db: AsyncSession):
+    """Hent email og tilhørende mailkonto — verificer ejerskab."""
+    account_ids = await _get_account_ids(user, db)
+    result = await db.execute(
+        select(EmailMessage)
+        .where(EmailMessage.id == email_id, EmailMessage.account_id.in_(account_ids))
+    )
+    email = result.scalar_one_or_none()
+    if not email:
+        raise HTTPException(status_code=404, detail="Email ikke fundet")
+
+    acc_result = await db.execute(
+        select(MailAccount).where(MailAccount.id == email.account_id)
+    )
+    account = acc_result.scalar_one_or_none()
+    if not account:
+        raise HTTPException(status_code=404, detail="Mailkonto ikke fundet")
+
+    return email, account
+
+
+async def _audit_log(db: AsyncSession, user_id, email_id, action: str, detail: str):
+    """Gem handling i audit log — hvad ejeren gjorde og hvornår."""
+    from sqlalchemy import text
+    try:
+        await db.execute(text("""
+            CREATE TABLE IF NOT EXISTS email_audit_log (
+                id SERIAL PRIMARY KEY,
+                user_id UUID NOT NULL,
+                email_id UUID,
+                action VARCHAR(100) NOT NULL,
+                detail TEXT,
+                created_at TIMESTAMPTZ DEFAULT NOW()
+            )
+        """))
+        await db.execute(text("""
+            INSERT INTO email_audit_log (user_id, email_id, action, detail)
+            VALUES (:uid, :eid, :action, :detail)
+        """), {"uid": user_id, "eid": email_id, "action": action, "detail": detail})
+    except Exception as e:
+        logger.warning("Audit log fejl (ikke kritisk): %s", e)
+
+
+@router.post("/{email_id}/trash")
+async def trash_email(
+    email_id: UUID,
+    data: TrashRequest,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Flyt email til papirkurven (standard) eller slet permanent fra papirkurven.
+
+    SIKKERHEDSREGEL: Permanent sletning er KUN tilladt for emails der allerede
+    ligger i papirkurven (is_trashed=True). En email i indbakken kan aldrig
+    permanent-slettes direkte — den skal i papirkurven først.
+
+    Dette er en EJER-handling — AI initierer aldrig sletning.
+    """
+    email, account = await _get_email_and_account(email_id, user, db)
+
+    # SIKKERHED: Bloker permanent sletning fra indbakken
+    if data.permanent and not getattr(email, 'is_trashed', False):
+        raise HTTPException(
+            status_code=400,
+            detail="Sikkerhedsspærre: Permanent sletning kræver at emailen først flyttes til papirkurven. "
+                   "Kald /trash uden permanent=true først."
+        )
+
+    # Emails uden provider_id er kun lokale (seed-data etc.)
+    if not email.provider_id or email.provider_id.startswith("msg_") or email.provider_id.startswith("compose-"):
+        # Kun i Noras database — marker som slettet lokalt
+        email.is_trashed = data.permanent  # permanent = slet-flag, ellers blot "trashed"
+        if data.permanent:
+            await db.delete(email)
+        await db.commit()
+        await _audit_log(db, user.id, email_id, "local_delete",
+                         f"Slettet lokalt: {email.subject}")
+        return {"deleted": True, "method": "local"}
+
+    provider = account.provider  # "gmail" eller "outlook"
+    success = False
+
+    if data.permanent:
+        # Permanent sletning — kun fra papirkurv
+        if provider == "gmail":
+            from app.services.mail_gmail import delete_message_permanent
+            success = await delete_message_permanent(account, db, email.provider_id)
+        else:
+            from app.services.mail_outlook import delete_message_permanent
+            success = await delete_message_permanent(account, db, email.provider_id)
+        action = "permanent_delete"
+        detail = f"Permanent slettet fra papirkurv ({provider}): {email.subject}"
+    else:
+        # Flyt til papirkurv (kan altid fortrydes i Gmail/Outlook)
+        if provider == "gmail":
+            from app.services.mail_gmail import trash_message
+            success = await trash_message(account, db, email.provider_id)
+        else:
+            from app.services.mail_outlook import trash_message
+            success = await trash_message(account, db, email.provider_id)
+        action = "trash"
+        detail = f"Sendt til papirkurv ({provider}): {email.subject}"
+
+    if success:
+        if data.permanent:
+            await db.delete(email)
+        else:
+            email.is_trashed = True
+        await db.commit()
+        await _audit_log(db, user.id, email_id, action, detail)
+        return {"deleted": data.permanent, "trashed": not data.permanent, "provider": provider}
+
+    raise HTTPException(status_code=502, detail=f"Kunne ikke slette email via {provider} API")
+
+
+@router.post("/{email_id}/move")
+async def move_email(
+    email_id: UUID,
+    data: MoveRequest,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Flyt email til en mappe/label. Ejeren valgte dette eksplicit.
+
+    Gmail: brug label-id (INBOX, STARRED, eller bruger-label-id)
+    Outlook: brug folder-id (inbox, drafts, deleteditems, eller bruger-mappe-id)
+    """
+    email, account = await _get_email_and_account(email_id, user, db)
+
+    if not email.provider_id or email.provider_id.startswith("msg_") or email.provider_id.startswith("compose-"):
+        raise HTTPException(status_code=400, detail="Denne email eksisterer kun lokalt og kan ikke flyttes via mail-API")
+
+    provider = account.provider
+    if provider == "gmail":
+        from app.services.mail_gmail import move_message
+        success = await move_message(account, db, email.provider_id, data.folder_id)
+    else:
+        from app.services.mail_outlook import move_message
+        success = await move_message(account, db, email.provider_id, data.folder_id)
+
+    if success:
+        await _audit_log(
+            db, user.id, email_id, "move",
+            f"Flyttet til '{data.folder_name or data.folder_id}' ({provider}): {email.subject}"
+        )
+        return {"moved": True, "folder": data.folder_id, "provider": provider}
+
+    raise HTTPException(status_code=502, detail=f"Kunne ikke flytte email via {provider} API")
+
+
+@router.get("/audit-log")
+async def get_audit_log(
+    limit: int = Query(50, ge=1, le=200),
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Hent audit log — hvad ejeren har gjort med emails."""
+    from sqlalchemy import text
+    try:
+        result = await db.execute(text("""
+            SELECT action, detail, created_at FROM email_audit_log
+            WHERE user_id = :uid ORDER BY created_at DESC LIMIT :lim
+        """), {"uid": user.id, "lim": limit})
+        return [
+            {"action": r.action, "detail": r.detail, "created_at": r.created_at.isoformat()}
+            for r in result.fetchall()
+        ]
+    except Exception:
+        return []
+
+
+@router.get("/labels")
+async def list_email_labels(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Hent tilgængelige mapper/labels fra brugerens mailkonti."""
+    accounts_result = await db.execute(
+        select(MailAccount).where(MailAccount.user_id == user.id, MailAccount.is_active == True)
+    )
+    accounts = accounts_result.scalars().all()
+
+    all_labels = []
+    for account in accounts:
+        try:
+            if account.provider == "gmail":
+                from app.services.mail_gmail import list_labels
+                labels = await list_labels(account, db)
+            else:
+                from app.services.mail_outlook import list_folders
+                labels = await list_folders(account, db)
+            for label in labels:
+                label["account_id"] = str(account.id)
+                label["provider"] = account.provider
+            all_labels.extend(labels)
+        except Exception as e:
+            logger.warning("Kunne ikke hente labels for konto %s: %s", account.id, e)
+
+    return all_labels

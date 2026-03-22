@@ -11,7 +11,7 @@ import ComposeEmail from '@/components/ComposeEmail'
 import { useTranslation } from '@/lib/i18n'
 import { Sparkles, Loader2, X, AlertTriangle, Search, PenSquare, Bell, Send, CheckCheck } from 'lucide-react'
 
-const categories = ['inquiry', 'complaint', 'order', 'support', 'spam', 'other']
+const categories = ['tilbud', 'booking', 'faktura', 'reklamation', 'intern', 'leverandor', 'support', 'spam', 'andet']
 const urgencies = ['high', 'medium', 'low']
 
 export default function InboxPage() {
@@ -49,8 +49,10 @@ export default function InboxPage() {
   const [pendingCount, setPendingCount] = useState(0)
 
   const categoryLabels: Record<string, string> = {
-    inquiry: t('inquiry'), complaint: t('complaint'), order: t('order'),
-    support: t('support'), spam: t('spam'), other: t('other'),
+    tilbud: 'Tilbud', booking: 'Booking', faktura: 'Faktura',
+    reklamation: 'Reklamation', intern: 'Intern', leverandor: 'Leverandør',
+    support: 'Support', spam: 'Spam', andet: 'Andet',
+    inquiry: t('inquiry'), complaint: t('complaint'), order: t('order'), other: t('other'),
   }
   const urgencyLabels: Record<string, string> = { high: t('high'), medium: t('medium'), low: t('low') }
 
@@ -198,6 +200,41 @@ export default function InboxPage() {
   const restEmails = !activeUrgency ? emails.filter(e => !(e.urgency === 'high' && !e.is_read)) : emails
   const unreadCount = emails.filter(e => !e.is_read).length
 
+  // Flad liste til tastatur-navigation
+  const allEmails = [...urgentEmails, ...restEmails]
+
+  // Tastatur-genveje: j/k = næste/forrige, g = generer, a = godkend, e = luk
+  useEffect(() => {
+    const handler = async (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement).tagName
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(tag)) return
+      if (e.metaKey || e.ctrlKey) return
+
+      if (e.key === 'j' || e.key === 'ArrowDown') {
+        e.preventDefault()
+        const idx = allEmails.findIndex(m => m.id === selectedId)
+        const next = allEmails[idx + 1] ?? allEmails[0]
+        if (next) handleSelect(next.id)
+      } else if (e.key === 'k' || e.key === 'ArrowUp') {
+        e.preventDefault()
+        const idx = allEmails.findIndex(m => m.id === selectedId)
+        const prev = allEmails[idx - 1] ?? allEmails[allEmails.length - 1]
+        if (prev) handleSelect(prev.id)
+      } else if (e.key === 'g' && selectedId && !generating) {
+        e.preventDefault()
+        handleGenerate()
+      } else if (e.key === 'a' && selectedEmail) {
+        e.preventDefault()
+        const pending = selectedEmail.suggestions?.find((s: any) => s.status === 'pending')
+        if (pending) await handleAction(pending.id, 'approve')
+      } else if (e.key === 'e' || e.key === 'Escape') {
+        if (selectedId) { e.preventDefault(); handleClose() }
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [allEmails, selectedId, selectedEmail, generating])
+
   return (
     <div className="h-full flex flex-col">
       {/* Filter bar */}
@@ -230,9 +267,17 @@ export default function InboxPage() {
               Godkend alle ({pendingCount})
             </button>
           )}
+          <div className="hidden lg:flex items-center gap-1 ml-auto mr-1 text-[10px] text-[var(--text-muted)]">
+            {[['j/k','nav'],['g','AI'],['a','godkend'],['e','luk']].map(([key, label]) => (
+              <span key={key} className="flex items-center gap-1">
+                <kbd className="px-1.5 py-0.5 rounded bg-[var(--surface-hover)] border border-[var(--border)] font-mono">{key}</kbd>
+                <span className="mr-2">{label}</span>
+              </span>
+            ))}
+          </div>
           <button
             onClick={() => setComposeOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-[#162249] hover:bg-[#1e2d6b] text-white transition-colors ml-auto"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-[#162249] hover:bg-[#1e2d6b] text-white transition-colors"
           >
             <PenSquare className="w-3.5 h-3.5" />
             {t('newEmail')}
@@ -463,15 +508,35 @@ export default function InboxPage() {
                   {selectedEmail.category && (
                     <div className="card p-4">
                       <h4 className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">{t('classification')}</h4>
+                      {selectedEmail.ai_summary && (
+                        <p className="text-sm text-[var(--text-secondary)] mb-3 italic border-l-2 border-[#42D1B9]/40 pl-3">
+                          {selectedEmail.ai_summary}
+                        </p>
+                      )}
                       <div className="space-y-1.5 text-sm">
                         <div className="flex justify-between">
                           <span className="text-[var(--text-muted)]">{t('category')}</span>
-                          <span className="font-medium text-[var(--text-primary)] capitalize">{selectedEmail.category}</span>
+                          <span className="font-medium text-[var(--text-primary)] capitalize">
+                            {categoryLabels[selectedEmail.category] || selectedEmail.category}
+                          </span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-[var(--text-muted)]">{t('priority')}</span>
                           <span className="font-medium text-[var(--text-primary)] capitalize">{selectedEmail.urgency}</span>
                         </div>
+                        {selectedEmail.sentiment && (
+                          <div className="flex justify-between">
+                            <span className="text-[var(--text-muted)]">Stemning</span>
+                            <span className={`font-medium capitalize ${
+                              selectedEmail.sentiment === 'positive' ? 'text-green-500' :
+                              selectedEmail.sentiment === 'negative' ? 'text-red-500' :
+                              'text-[var(--text-secondary)]'
+                            }`}>
+                              {selectedEmail.sentiment === 'positive' ? 'Positiv 😊' :
+                               selectedEmail.sentiment === 'negative' ? 'Negativ 😟' : 'Neutral 😐'}
+                            </span>
+                          </div>
+                        )}
                         {selectedEmail.topic && (
                           <div className="flex justify-between">
                             <span className="text-[var(--text-muted)]">{t('topic')}</span>

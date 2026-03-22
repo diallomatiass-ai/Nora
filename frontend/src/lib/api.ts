@@ -36,6 +36,9 @@ export const api = {
   register: (data: { email: string; name: string; password: string; company_name?: string }) =>
     fetchApi('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
   getMe: () => fetchApi('/auth/me'),
+  updateMe: (data: { name?: string }) =>
+    fetchApi('/auth/me', { method: 'PATCH', body: JSON.stringify(data) }),
+  learnStyle: () => fetchApi('/auth/learn-style', { method: 'POST' }),
 
   // Dashboard
   getDashboardSummary: () => fetchApi('/emails/dashboard/summary'),
@@ -55,6 +58,7 @@ export const api = {
   getEmail: (id: string) => fetchApi(`/emails/${id}`),
   getEmailStats: () => fetchApi('/emails/stats/summary'),
   getEmailThread: (id: string) => fetchApi(`/emails/${id}/thread`),
+  getThreadSummary: (id: string) => fetchApi(`/emails/${id}/thread-summary`),
   getEmailCustomerHistory: (id: string) => fetchApi(`/emails/${id}/customer-history`),
   composeEmail: (data: { to_address: string; subject: string; body: string; account_id: string }) =>
     fetchApi('/emails/compose', { method: 'POST', body: JSON.stringify(data) }),
@@ -104,6 +108,8 @@ export const api = {
     fetchApi(`/templates/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteTemplate: (id: string) =>
     fetchApi(`/templates/${id}`, { method: 'DELETE' }),
+  generateTemplate: (data: { description: string; category?: string; tone?: string }) =>
+    fetchApi('/templates/generate', { method: 'POST', body: JSON.stringify(data) }),
 
   // Knowledge
   listKnowledge: (entryType?: string) =>
@@ -185,6 +191,8 @@ export const api = {
   connectOutlook: () => fetchApi('/webhooks/outlook/connect'),
   disconnectAccount: (id: string) =>
     fetchApi(`/webhooks/accounts/${id}`, { method: 'DELETE' }),
+  updateAccount: (id: string, data: Record<string, unknown>) =>
+    fetchApi(`/webhooks/accounts/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
 
   // Admin
   getAdminStats: () => fetchApi('/admin/stats'),
@@ -238,6 +246,51 @@ export const api = {
     fetchApi(`/meetings/${id}`, { method: 'DELETE' }),
   processMeeting: (id: string) =>
     fetchApi(`/meetings/${id}/process`, { method: 'POST' }),
+  addTranscriptChunk: (id: string, data: { speaker: string; text: string; timestamp: string }) =>
+    fetchApi(`/meetings/${id}/transcript-chunk`, { method: 'POST', body: JSON.stringify(data) }),
+  sendReferat: (id: string, data: { recipients: string[]; summary: string; action_items: string[]; full_text: string }) =>
+    fetchApi(`/meetings/${id}/send-referat`, { method: 'POST', body: JSON.stringify(data) }),
+
+  // Email ejer-handlinger (slet, flyt, papirkurv)
+  trashEmail: (id: string, permanent = false) =>
+    fetchApi(`/emails/${id}/trash`, { method: 'POST', body: JSON.stringify({ permanent }) }),
+  moveEmail: (id: string, folderId: string, folderName?: string) =>
+    fetchApi(`/emails/${id}/move`, { method: 'POST', body: JSON.stringify({ folder_id: folderId, folder_name: folderName }) }),
+  listEmailLabels: () => fetchApi('/emails/labels'),
+  getAuditLog: (limit = 50) => fetchApi(`/emails/audit-log?limit=${limit}`),
+
+  // Kategorier
+  listCategories: () => fetchApi('/categories/'),
+  createCategory: (data: { category_id: string; label: string; color?: string; description?: string }) =>
+    fetchApi('/categories/', { method: 'POST', body: JSON.stringify(data) }),
+  updateCategory: (id: string, data: { label?: string; color?: string; description?: string; is_active?: boolean }) =>
+    fetchApi(`/categories/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  deleteCategory: (id: string) =>
+    fetchApi(`/categories/${id}`, { method: 'DELETE' }),
+
+  // Kalender
+  getCalendarStatus: () => fetchApi('/calendar/status'),
+  getCalendarEvents: (params?: { from?: string; to?: string; event_type?: string }) => {
+    const searchParams = new URLSearchParams()
+    if (params) Object.entries(params).forEach(([k, v]) => { if (v !== undefined) searchParams.set(k, v) })
+    const qs = searchParams.toString()
+    return fetchApi(`/calendar/events${qs ? `?${qs}` : ''}`)
+  },
+  listCalendarAccounts: () => fetchApi('/calendar/oauth/accounts'),
+  connectGoogleCalendar: () => fetchApi('/calendar/oauth/google/connect'),
+  connectOutlookCalendar: () => fetchApi('/calendar/oauth/microsoft/connect'),
+  disconnectCalendarAccount: (id: string) => fetchApi(`/calendar/oauth/accounts/${id}`, { method: 'DELETE' }),
+  deleteCalendarAccount: (id: string) => fetchApi(`/calendar/oauth/accounts/${id}`, { method: 'DELETE' }),
+  listCalendarEvents: (params?: { from?: string; to?: string; event_type?: string }) => {
+    const searchParams = new URLSearchParams()
+    if (params) Object.entries(params).forEach(([k, v]) => { if (v !== undefined) searchParams.set(k, v) })
+    const qs = searchParams.toString()
+    return fetchApi(`/calendar/events${qs ? `?${qs}` : ''}`)
+  },
+  createCalendarEvent: (data: { title: string; description?: string; start_time: string; end_time: string; event_type?: string }) =>
+    fetchApi('/calendar/events', { method: 'POST', body: JSON.stringify(data) }),
+  deleteCalendarEvent: (id: string) =>
+    fetchApi(`/calendar/events/${id}`, { method: 'DELETE' }),
 
   // Generisk request (bruges af møde-siden)
   request: (method: string, path: string, body?: unknown) =>

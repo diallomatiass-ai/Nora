@@ -26,10 +26,21 @@ class EmailMessage(Base):
     is_replied: Mapped[bool] = mapped_column(default=False)
 
     # AI classification
-    category: Mapped[str | None] = mapped_column(String(50))  # inquiry, complaint, order, support, spam, other
-    urgency: Mapped[str | None] = mapped_column(String(20))   # high, medium, low
+    category: Mapped[str | None] = mapped_column(String(50))
+    urgency: Mapped[str | None] = mapped_column(String(20))
     topic: Mapped[str | None] = mapped_column(String(100))
     confidence: Mapped[float | None] = mapped_column(Float)
+    ai_summary: Mapped[str | None] = mapped_column(Text)        # Én-linje AI-opsummering
+    sentiment: Mapped[str | None] = mapped_column(String(20))   # positive, neutral, negative
+
+    # Ejer-handlinger (spejles 1:1 med Gmail/Outlook)
+    is_trashed: Mapped[bool] = mapped_column(default=False)
+    is_starred: Mapped[bool] = mapped_column(default=False)
+    folder_id: Mapped[str | None] = mapped_column(String(255))
+    folder_name: Mapped[str | None] = mapped_column(String(255))
+
+    # Gmail/Outlook label-sync (opt-in)
+    nora_label_id: Mapped[str | None] = mapped_column(String(255))  # Label sat af Nora i Gmail/Outlook
 
     processed: Mapped[bool] = mapped_column(default=False)
     is_outgoing: Mapped[bool] = mapped_column(default=False)

@@ -13,8 +13,8 @@
     --text-primary: #0f172a;
     --text-secondary: #475569;
     --text-muted: #94a3b8;
-    --accent: #42D1B9;
-    --accent-hover: #2ABBA4;
+    --accent: #0CA9BA;
+    --accent-hover: #0A95A6;
     --glass-bg: rgba(255, 255, 255, 0.8);
     --glass-border: rgba(0, 0, 0, 0.06);
     --card-bg: rgba(255, 255, 255, 0.9);
@@ -25,30 +25,44 @@
     --scrollbar-thumb: #cbd5e1;
     --scrollbar-thumb-hover: #94a3b8;
     color-scheme: light;
+    /* Shadows */
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+    --shadow-lg: 0 12px 32px rgba(0,0,0,0.12), 0 4px 8px rgba(0,0,0,0.06);
+    --shadow-ai: 0 0 0 1px rgba(12,169,186,0.2), 0 4px 16px rgba(12,169,186,0.1);
+    /* Brand */
+    --brand-navy: #122B4A;
+    --brand-teal: #0CA9BA;
+    --brand-teal-soft: rgba(12,169,186,0.10);
   }
 
-  /* Dark theme — matcher logoets mørke navy */
+  /* Dark theme — matcher logoets mørke navy (#122B4A) */
   .dark {
-    --bg: #0D1B3E;
-    --surface: #162249;
-    --surface-hover: #1e2d5e;
-    --border: #1e2d5e;
+    --bg: #0A1829;
+    --surface: #122B4A;
+    --surface-hover: #1a3660;
+    --border: #1a3660;
     --border-subtle: rgba(255, 255, 255, 0.08);
     --text-primary: #ffffff;
     --text-secondary: #a8bdd6;
     --text-muted: #6b84a8;
-    --accent: #42D1B9;
-    --accent-hover: #56DEC8;
-    --glass-bg: rgba(22, 34, 73, 0.7);
+    --accent: #0CA9BA;
+    --accent-hover: #3DBFCC;
+    --glass-bg: rgba(18, 43, 74, 0.7);
     --glass-border: rgba(255, 255, 255, 0.08);
-    --card-bg: rgba(22, 34, 73, 0.6);
-    --card-border: rgba(66, 209, 185, 0.12);
-    --input-bg: #162249;
-    --input-border: #1e2d5e;
-    --gradient-border-bg: #162249;
-    --scrollbar-thumb: #1e2d5e;
-    --scrollbar-thumb-hover: #2a3f7a;
+    --card-bg: rgba(18, 43, 74, 0.6);
+    --card-border: rgba(12, 169, 186, 0.12);
+    --input-bg: #122B4A;
+    --input-border: #1a3660;
+    --gradient-border-bg: #122B4A;
+    --scrollbar-thumb: #1a3660;
+    --scrollbar-thumb-hover: #234878;
     color-scheme: dark;
+    /* Shadows */
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.2);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.3);
+    --shadow-lg: 0 12px 32px rgba(0,0,0,0.4);
+    --shadow-ai: 0 0 0 1px rgba(12,169,186,0.3), 0 4px 16px rgba(12,169,186,0.15);
   }
 
   body {
@@ -104,7 +118,7 @@
     position: absolute;
     inset: -1px;
     border-radius: inherit;
-    background: linear-gradient(135deg, #162249, #42D1B9, #162249);
+    background: linear-gradient(135deg, #122B4A, #0CA9BA, #122B4A);
     z-index: -1;
     opacity: 0.5;
   }
@@ -122,8 +136,8 @@
   }
 
   .input-field:focus {
-    border-color: rgba(66, 209, 185, 0.5);
-    box-shadow: 0 0 0 2px rgba(66, 209, 185, 0.2);
+    border-color: rgba(12, 169, 186, 0.5);
+    box-shadow: 0 0 0 2px rgba(12, 169, 186, 0.2);
   }
 
   /* Keep input-dark as alias for backwards compat */
@@ -140,19 +154,19 @@
   }
 
   .input-dark:focus {
-    border-color: rgba(66, 209, 185, 0.5);
-    box-shadow: 0 0 0 2px rgba(66, 209, 185, 0.2);
+    border-color: rgba(12, 169, 186, 0.5);
+    box-shadow: 0 0 0 2px rgba(12, 169, 186, 0.2);
   }
 
   .btn-primary {
     @apply px-4 py-2 text-sm font-medium text-white rounded-lg transition-all;
-    background: linear-gradient(135deg, #162249, #42D1B9);
+    background: linear-gradient(135deg, #122B4A, #0CA9BA);
     box-shadow: 0 1px 2px rgba(0,0,0,0.2), 0 0 0 1px rgba(66,209,185,0.2);
   }
 
   .btn-primary:hover {
-    background: linear-gradient(135deg, #1e2d6b, #56DEC8);
-    box-shadow: 0 4px 16px rgba(66, 209, 185, 0.35), 0 0 0 1px rgba(66,209,185,0.3);
+    background: linear-gradient(135deg, #1a3660, #3DBFCC);
+    box-shadow: 0 4px 16px rgba(12, 169, 186, 0.35), 0 0 0 1px rgba(66,209,185,0.3);
     transform: translateY(-1px);
   }
 
@@ -175,5 +189,26 @@
 
   .text-dim {
     color: var(--text-muted);
+  }
+}
+
+@layer utilities {
+  @keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateX(8px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  @keyframes pulse-badge {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-fadeIn {
+    animation: fadeIn 0.22s ease-out;
   }
 }
