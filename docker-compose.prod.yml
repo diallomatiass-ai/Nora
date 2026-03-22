@@ -1,0 +1,143 @@
+version: "3.8"
+
+# Produktion: ingen code volume mounts — kører builds fra image
+# Brug: docker compose -f docker-compose.prod.yml up -d
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: always
+    network_mode: host
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      PGPORT: "5434"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -p 5434"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    network_mode: host
+    command: redis-server --port 6380 --save 60 1 --loglevel warning
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "6380", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  chromadb:
+    image: chromadb/chroma:latest
+    restart: always
+    network_mode: host
+    volumes:
+      - chromadb_data:/chroma/chroma
+    environment:
+      ANONYMIZED_TELEMETRY: "false"
+      CHROMA_SERVER_HTTP_PORT: "8002"
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: always
+    network_mode: host
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    # Ingen volume mount i prod — koder er bagt ind i image
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  celery-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: always
+    network_mode: host
+    command: celery -A app.tasks.worker worker --loglevel=info --concurrency=2
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  celery-beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: always
+    network_mode: host
+    command: celery -A app.tasks.worker beat --loglevel=info
+    env_file: .env
+    depends_on:
+      redis:
+        condition: service_healthy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-/api}
+    restart: always
+    network_mode: host
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-/api}
+    depends_on:
+      - backend
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  nginx:
+    image: nginx:alpine
+    restart: always
+    network_mode: host
+    volumes:
+      - ./nginx/nginx-prod.conf:/etc/nginx/nginx.conf:ro
+      - ssl_certs:/etc/letsencrypt:ro
+      - certbot_www:/var/www/certbot:ro
+    depends_on:
+      - backend
+      - frontend
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  pgdata:
+  redis_data:
+  chromadb_data:
+  ssl_certs:
+  certbot_www:

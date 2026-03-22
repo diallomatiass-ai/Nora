@@ -69,6 +69,9 @@ class Settings(BaseSettings):
     stripe_success_url: str = "http://localhost/billing?success=true"
     stripe_cancel_url: str = "http://localhost/billing?canceled=true"
 
+    # Frontend URL (bruges til CORS + Stripe redirect)
+    frontend_url: str = "http://localhost"
+
     @field_validator("secret_key")
     @classmethod
     def warn_weak_secret(cls, v):

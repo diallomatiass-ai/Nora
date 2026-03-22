@@ -1,0 +1,39 @@
+name: Deploy til Hetzner
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  deploy:
+    name: SSH Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout kode
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          script: |
+            set -e
+            cd /opt/nora
+
+            echo "→ Henter seneste kode..."
+            git pull origin master
+
+            echo "→ Bygger og genstarter containers..."
+            docker compose -f docker-compose.prod.yml pull --ignore-pull-failures 2>/dev/null || true
+            docker compose -f docker-compose.prod.yml build --no-cache backend frontend
+            docker compose -f docker-compose.prod.yml up -d --force-recreate backend frontend celery-worker celery-beat
+
+            echo "→ Venter på backend..."
+            sleep 5
+            docker compose -f docker-compose.prod.yml ps
+
+            echo "✅ Deploy færdig"
