@@ -25,6 +25,7 @@ class UserResponse(BaseModel):
     phone: str | None
     country: str | None
     role: str
+    email_verified: bool
     two_fa_enabled: bool
     created_at: datetime
 

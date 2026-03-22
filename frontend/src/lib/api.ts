@@ -39,6 +39,14 @@ export const api = {
   updateMe: (data: { name?: string }) =>
     fetchApi('/auth/me', { method: 'PATCH', body: JSON.stringify(data) }),
   learnStyle: () => fetchApi('/auth/learn-style', { method: 'POST' }),
+  verifyEmail: (token: string) => fetchApi(`/auth/verify-email?token=${token}`),
+  resendVerify: (email: string) => fetchApi('/auth/resend-verify', { method: 'POST', body: JSON.stringify({ email }) }),
+  forgotPassword: (email: string) => fetchApi('/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }) }),
+  resetPassword: (token: string, password: string) => fetchApi('/auth/reset-password', { method: 'POST', body: JSON.stringify({ token, password }) }),
+  login2FA: (temp_token: string, code: string) => fetchApi('/auth/2fa/login', { method: 'POST', body: JSON.stringify({ temp_token, code }) }),
+  setup2FA: () => fetchApi('/auth/2fa/setup', { method: 'POST' }),
+  enable2FA: (secret: string, code: string) => fetchApi('/auth/2fa/enable-confirm', { method: 'POST', body: JSON.stringify({ secret, code }) }),
+  disable2FA: (code: string) => fetchApi('/auth/2fa/disable', { method: 'POST', body: JSON.stringify({ code }) }),
 
   // Dashboard
   getDashboardSummary: () => fetchApi('/emails/dashboard/summary'),

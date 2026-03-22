@@ -21,11 +21,16 @@ class User(Base):
     role: Mapped[str] = mapped_column(String(50), default="user")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
+    # Email-verificering
+    email_verified: Mapped[bool] = mapped_column(default=False)
+    email_verify_token: Mapped[str | None] = mapped_column(String(255), index=True)
+    email_verify_expires: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
     # Konto-gendannelse
     password_reset_token: Mapped[str | None] = mapped_column(String(255), index=True)
     password_reset_expires: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
-    # 2-trins sikkerhed
+    # 2-trins sikkerhed (TOTP — Google Authenticator kompatibel)
     two_fa_enabled: Mapped[bool] = mapped_column(default=False)
     two_fa_secret: Mapped[str | None] = mapped_column(String(255))
 

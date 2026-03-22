@@ -24,10 +24,21 @@ def verify_password(plain: str, hashed: str) -> bool:
     return pwd_context.verify(plain, hashed)
 
 
-def create_access_token(user_id: UUID) -> str:
-    expire = datetime.now(timezone.utc) + timedelta(minutes=settings.access_token_expire_minutes)
-    payload = {"sub": str(user_id), "exp": expire}
+def create_access_token(user_id: UUID, expires_minutes: int | None = None, scope: str = "access") -> str:
+    minutes = expires_minutes or settings.access_token_expire_minutes
+    expire = datetime.now(timezone.utc) + timedelta(minutes=minutes)
+    payload = {"sub": str(user_id), "exp": expire, "scope": scope}
     return jwt.encode(payload, settings.secret_key, algorithm=settings.algorithm)
+
+
+def decode_token(token: str, scope: str = "access") -> dict | None:
+    try:
+        payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
+        if payload.get("scope") != scope:
+            return None
+        return payload
+    except JWTError:
+        return None
 
 
 async def get_current_user(

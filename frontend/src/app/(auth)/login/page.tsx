@@ -39,14 +39,29 @@ export default function LoginPage() {
   const [country, setCountry] = useState('Danmark')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [requires2FA, setRequires2FA] = useState(false)
+  const [tempToken, setTempToken] = useState('')
+  const [twoFACode, setTwoFACode] = useState('')
+  const [emailNotVerified, setEmailNotVerified] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     setLoading(true)
     try {
+      if (requires2FA) {
+        const data = await api.login2FA(tempToken, twoFACode)
+        localStorage.setItem('token', data.access_token)
+        window.location.href = '/'
+        return
+      }
       if (isLogin) {
         const data = await api.login(email, password)
+        if (data.requires_2fa) {
+          setTempToken(data.temp_token)
+          setRequires2FA(true)
+          return
+        }
         localStorage.setItem('token', data.access_token)
         window.location.href = '/'
       } else {
@@ -57,12 +72,14 @@ export default function LoginPage() {
           phone,
           country,
         })
-        const data = await api.login(email, password)
-        localStorage.setItem('token', data.access_token)
-        window.location.href = '/'
+        window.location.href = '/verify-email'
       }
     } catch (err: any) {
-      setError(err.message || t('somethingWrong'))
+      if (err.message === 'EMAIL_NOT_VERIFIED') {
+        setEmailNotVerified(true)
+      } else {
+        setError(err.message || t('somethingWrong'))
+      }
     } finally {
       setLoading(false)
     }
@@ -106,7 +123,23 @@ export default function LoginPage() {
             </div>
           )}
 
+          {emailNotVerified && (
+            <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-lg text-sm text-amber-700 dark:text-amber-400">
+              Din email er ikke bekræftet endnu.{' '}
+              <a href="/verify-email" className="font-semibold underline">Send nyt bekræftelseslink</a>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-4">
+            {requires2FA && (
+              <div>
+                <p className="text-sm text-slate-600 dark:text-zinc-400 mb-3">Indtast den 6-cifrede kode fra din authenticator-app.</p>
+                <label className="block text-sm font-medium text-slate-600 dark:text-zinc-400 mb-1.5">2FA-kode</label>
+                <input type="text" inputMode="numeric" maxLength={6} value={twoFACode}
+                  onChange={e => setTwoFACode(e.target.value.replace(/\D/g, ''))}
+                  className="input-dark text-center text-2xl tracking-[0.5em]" placeholder="000000" autoFocus />
+              </div>
+            )}
             {!isLogin && (
               <>
                 <div>
@@ -162,19 +195,29 @@ export default function LoginPage() {
               <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} className="input-dark" />
             </div>
             <button type="submit" disabled={loading} className="w-full py-2.5 btn-primary font-medium rounded-lg">
-              {loading ? t('signingIn') : isLogin ? t('signIn') : t('signUp')}
+              {loading ? t('signingIn') : requires2FA ? 'Bekræft kode' : isLogin ? t('signIn') : t('signUp')}
             </button>
           </form>
 
-          <p className="mt-5 text-sm text-center text-slate-500 dark:text-zinc-500">
-            {isLogin ? t('noAccount') : t('hasAccount')}{' '}
-            <button
-              onClick={() => { setIsLogin(!isLogin); setError('') }}
-              className="text-[#42D1B9] hover:text-[#56DEC8] font-medium transition-colors"
-            >
-              {isLogin ? t('signUp') : t('signIn')}
-            </button>
-          </p>
+          {isLogin && !requires2FA && (
+            <p className="mt-3 text-sm text-center">
+              <a href="/forgot-password" className="text-slate-400 dark:text-zinc-500 hover:text-[#42D1B9] transition-colors">
+                Glemt adgangskode?
+              </a>
+            </p>
+          )}
+
+          {!requires2FA && (
+            <p className="mt-4 text-sm text-center text-slate-500 dark:text-zinc-500">
+              {isLogin ? t('noAccount') : t('hasAccount')}{' '}
+              <button
+                onClick={() => { setIsLogin(!isLogin); setError(''); setEmailNotVerified(false) }}
+                className="text-[#42D1B9] hover:text-[#56DEC8] font-medium transition-colors"
+              >
+                {isLogin ? t('signUp') : t('signIn')}
+              </button>
+            </p>
+          )}
         </div>
       </div>
     </div>

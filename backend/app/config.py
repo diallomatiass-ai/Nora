@@ -59,6 +59,10 @@ class Settings(BaseSettings):
     sentry_traces_sample_rate: float = 0.1  # 10% af requests trackes i produktion
     log_level: str = "INFO"
 
+    # Email (Resend)
+    resend_api_key: str = ""
+    resend_from_email: str = "Nora <noreply@nora.dk>"
+
     # Stripe
     stripe_secret_key: str = ""
     stripe_publishable_key: str = ""
